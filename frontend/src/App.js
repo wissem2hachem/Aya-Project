@@ -1,29 +1,37 @@
-// src/App.js
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Sidebar from "./Components/Sidebar";
 import NavBar from './Components/Navbar'; 
-import Sidebar from './Components/Sidebar'; 
-import Dashboard from './Components/Dashboard';
+import DashboardApp from "./Components/DashboardApp";
+import Employees from "./pages/Employees";
 import Login from './Components/Login';
 import SignIn from './Components/Signin';
 import SignUp from './Components/Signup';
 
-const App = () => {
+function App() {
   return (
-    
-    
     <Router>
-    <Routes>
-        <Route path="/" element={<Sidebar />} />
-        <Route path="/login" element={<Login  />} />
-        <Route path="/signIn" element={<SignIn/>} />
-        <Route path="/Dashboard" element={<Dashboard/>} />
-        <Route path="/signUp" element={<SignUp/>} />
-        <Route path="/navbar" element={<NavBar/>} />
+      {/* Only show sidebar on certain routes */}
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/signIn" element={<SignIn />} />
+        <Route path="/signUp" element={<SignUp />} />
+        <Route path="*" element={
+          <div className="dashboard">
+            <Sidebar />
+            <div className="main-content">
+              <Routes>
+                <Route path="/" element={<DashboardApp />} />
+                <Route path="/employees" element={<Employees />} />
+                <Route path="/sidebar" element={<Sidebar />} />
+                <Route path="/navbar" element={<NavBar />} />
+              </Routes>
+            </div>
+          </div>
+        } />
+      </Routes>
 
-    </Routes>
-</Router>
+    </Router>
   );
-};
+}
 
 export default App;

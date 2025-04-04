@@ -1,29 +1,37 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom'; // Import NavLink for active link highlighting
-import './Navbar.css';
+import React from "react";
+import { IoMdNotificationsOutline } from "react-icons/io";
+import { FaSearch } from "react-icons/fa";
+import { FiMail } from "react-icons/fi";
+import { MdLogout } from "react-icons/md";
+import avatar from "../assets/avatarImage.jpeg";
 
-const Navbar = () => {
-    return (
-        <nav className="navbar">
-            <div className="navbar-logo">
-                <a href="/">MyLogo</a>
-            </div>
-            <ul className="navbar-links">
-                <li>
-                    <NavLink exact to="/" activeClassName="active-link">Home</NavLink>
-                </li>
-                <li>
-                    <NavLink to="/about" activeClassName="active-link">About</NavLink>
-                </li>
-                <li>
-                    <NavLink to="/services" activeClassName="active-link">Services</NavLink>
-                </li>
-                <li>
-                    <NavLink to="/contact" activeClassName="active-link">Contact</NavLink>
-                </li>
-            </ul>
-        </nav>
-    );
-};
+export default function Navbar() {
+  return (
+    <div className="navbar">
+      {/* User Profile Section */}
+      <div className="avatar">
+        <img src={avatar} alt="User Avatar" />
+        <div className="info">
+          <h4 className="title">Admin</h4>
+          <h6 className="status">Online</h6>
+        </div>
+      </div>
 
-export default Navbar;
+      {/* Search Bar */}
+      <div className="search__bar">
+        <input type="text" placeholder="Search Employees..." />
+        <FaSearch />
+      </div>
+
+      {/* Navbar Icons */}
+      <div className="navbar__info">
+        <IoMdNotificationsOutline />
+        <FiMail />
+        <button className="logout">
+          <MdLogout />
+          Logout
+        </button>
+      </div>
+    </div>
+  );
+}
