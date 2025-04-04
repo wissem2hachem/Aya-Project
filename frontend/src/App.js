@@ -6,8 +6,13 @@ import Employees from "./pages/Employees";
 import Login from './Components/Login';
 import SignIn from './Components/Signin';
 import SignUp from './Components/Signup';
+<<<<<<< HEAD
 
 function App() {
+=======
+//new
+const App = () => {
+>>>>>>> 543a13382a2256af3d3207b0e889f3e4f7d78d42
   return (
     <Router>
       {/* Only show sidebar on certain routes */}
