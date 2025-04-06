@@ -1,65 +1,101 @@
 .navbar {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  color: white;
+  padding: 1rem 2rem;
+  background-color: rgba(30, 32, 40, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  position:sticky;
+  top: 0;
+  z-index: 1000;
+
+
   .avatar {
     display: flex;
     align-items: center;
-    gap: 0.8vw;
+    gap: 1rem;
+
     img {
-      height: 8vh;
-      border-radius: 2rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
     }
+
     .info {
+      .title {
+        margin: 0;
+        font-size: 1rem;
+        color: #fff;
+      }
+
       .status {
-        color: #80b918;
+        margin: 0;
+        font-size: 0.75rem;
+        color: #7cf97c;
       }
     }
   }
-  .quick {
-    button {
-      border-radius: 2vw;
-      padding: 2vh 6vw;
-      display: flex;
-      gap: 1vw;
-      background-color: transparent;
+
+  .search__bar {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    gap: 0.5rem;
+
+    input {
+      background: transparent;
+      border: none;
+      outline: none;
       color: white;
-      border: 2px solid white;
+      width: 200px;
+    }
+
+    svg {
+      color: #ccc;
       cursor: pointer;
-      font-weight: 900;
-      transition: 0.4s ease-in-out;
-      svg {
-        font-size: larger;
-      }
-      &:hover {
-        background-color: #c70f61;
-        color: white;
-      }
     }
   }
+
   .navbar__info {
     display: flex;
     align-items: center;
-    gap: 1.4vw;
+    gap: 1.5rem;
 
-    .search__bar {
-      background-color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 2vw;
-      padding: 0 1vw;
-      input {
-        height: 5vh;
-        width: 15vw;
-        padding: 1vw;
-        border: none;
-        &:focus {
-          outline: none;
-        }
+    svg {
+      font-size: 1.25rem;
+      color: #ccc;
+      cursor: pointer;
+
+      &:hover {
+        color: #fff;
       }
+    }
+
+    .logout {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background-color: #ff4d4d;
+      border: none;
+      border-radius: 0.75rem;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: #ff1a1a;
+      }
+
       svg {
-        color: #c70f61;
+        font-size: 1.1rem;
       }
     }
   }
