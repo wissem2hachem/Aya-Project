@@ -1,0 +1,144 @@
+.sidebar {
+  --sidebar-bg: #212529;
+  --brand-bg: #000;
+  --accent-color: #c70f61;
+  --text-color: #fff;
+  --hover-transition: 0.3s ease-in-out;
+  --link-gap: 0.7rem;
+  --link-padding: 0.75rem;
+  --link-radius: 0.5rem;
+  --active-indicator-width: 4px;
+
+  height: 100vh;
+  background-color: var(--sidebar-bg);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10;
+
+  .brand {
+    background-color: var(--brand-bg);
+    min-height: 80px; // Better than percentage for consistency
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    h2 {
+      font-weight: 900;
+      letter-spacing: 0.1em; // Use em instead of vw for consistency
+      margin: 0;
+      font-size: clamp(1.25rem, 1.5vw, 1.5rem); // Responsive font size
+      transition: color var(--hover-transition);
+      white-space: nowrap;
+
+      span {
+        color: var(--accent-color);
+        transition: color var(--hover-transition);
+      }
+
+      &:hover {
+        color: var(--accent-color);
+        
+        span {
+          color: var(--text-color);
+        }
+      }
+    }
+  }
+
+  .links {
+    padding: 2rem 0;
+    overflow-y: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    li {
+      list-style-type: none;
+      width: 100%;
+      padding: 0 1.5rem;
+
+      .link-button {
+        color: var(--text-color);
+        text-transform: uppercase;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: var(--link-gap);
+        padding: var(--link-padding);
+        border-radius: var(--link-radius);
+        transition: 
+          color var(--hover-transition),
+          background-color var(--hover-transition);
+        font-size: 0.875rem;
+        letter-spacing: 0.05em;
+        position: relative;
+
+        &:hover {
+          color: var(--accent-color);
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--accent-color);
+          outline-offset: 2px;
+        }
+
+        svg {
+          font-size: 1.25rem; // Better icon sizing
+          flex-shrink: 0;
+        }
+      }
+
+      .active {
+        color: var(--accent-color);
+        font-weight: 600;
+        background-color: rgba(255, 255, 255, 0.05);
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          height: 50%;
+          width: var(--active-indicator-width);
+          background-color: var(--accent-color);
+          border-radius: 0 var(--active-indicator-width) var(--active-indicator-width) 0;
+        }
+      }
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 100vh;
+    
+    .brand {
+      min-height: 60px;
+      padding: 0.5rem;
+    }
+
+    .links {
+      padding: 1rem 0;
+      
+      li {
+        padding: 0 0.75rem;
+        
+        .link-button {
+          padding: 0.5rem;
+          font-size: 0.75rem;
+          
+          svg {
+            font-size: 1rem;
+          }
+        }
+      }
+    }
+  }
+}

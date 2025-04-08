@@ -1,4 +1,5 @@
 import React from "react";
+import './Employees.scss'; 
 
 export default function Employees() {
   const employees = [

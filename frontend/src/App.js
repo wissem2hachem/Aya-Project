@@ -1,37 +1,32 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Sidebar from "./Components/Sidebar";
-import NavBar from './Components/Navbar'; 
-import DashboardApp from "./Components/DashboardApp";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+
+import Dashboard from "./pages/Dashboard";
 import Employees from "./pages/Employees";
-import Login from './Components/Login';
-import SignIn from './Components/Signin';
-import SignUp from './Components/Signup';
+import Navbar from "./Components/Navbar";
+import Departments from "./pages/Departments";
 
-const App = () => {
+
+const ProtectedRoute = ({ element }) => {
+  const isAuthenticated = localStorage.getItem("token"); // Check if token exists
+  return isAuthenticated ? element : <Navigate to="/" />; // Redirect to Login if not authenticated
+};
+
+
+function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Authentication Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signIn" element={<SignIn />} />
-        <Route path="/signUp" element={<SignUp />} />
+    
+        <Routes>
+          {/* Public Route - Login */}
 
-        {/* Dashboard Routes (With Sidebar & Navbar Layout) */}
-        <Route path="*" element={
-          <div className="dashboard">
-            <Sidebar />
-            <div className="main-content">
-              {/* Ensure NavBar is rendered only once here */}
-              <NavBar />
-              <Routes>
-                <Route path="/" element={<DashboardApp />} />
-                <Route path="/employees" element={<Employees />} />
-              </Routes>
-            </div>
-          </div>
-        } />
-      </Routes>
-    </Router>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/employees" element={<Employees />} />
+        <Route path = "/navbar" element={<Navbar />} />
+        <Route path="/departments" element={<Departments />} />
+
+        
+        </Routes>
+      
   );
 }
 
