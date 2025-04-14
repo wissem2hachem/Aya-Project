@@ -6,6 +6,11 @@ import Employees from "./pages/Employees";
 import Navbar from "./Components/Navbar";
 import Departments from "./pages/Departments";
 
+import UserManager from "./Components/UserManager";
+import "./Components/Login";
+import Login from "./Components/Login";
+import Signup from "./Components/Signup";
+
 
 const ProtectedRoute = ({ element }) => {
   const isAuthenticated = localStorage.getItem("token"); // Check if token exists
@@ -23,6 +28,12 @@ function App() {
         <Route path="/employees" element={<Employees />} />
         <Route path = "/navbar" element={<Navbar />} />
         <Route path="/departments" element={<Departments />} />
+   
+        <Route path = "/user-manager" element={<UserManager />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        
 
         
         </Routes>

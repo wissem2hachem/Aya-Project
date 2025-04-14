@@ -29,7 +29,7 @@ const Login = () => {
         return;
       }
 
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Error logging in:", error);
       setError("Network error. Please check your connection and try again.");

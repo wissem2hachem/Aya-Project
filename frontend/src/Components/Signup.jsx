@@ -1,20 +1,48 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Signup = () => {
   const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
-  const [firstname, setFirstname] = useState("");  // New state for first name
-  const [lastname, setLastname] = useState("");    // New state for last name
+  const [firstname, setFirstname] = useState("");  
+  const [lastname, setLastname] = useState("");    
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const navigate = useNavigate(); // 👈 React Router navigation hook
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Firstname:", firstname);
-    console.log("Lastname:", lastname);
-    console.log("Email:", email);
-    console.log("Password:", password);
+    setError(null);
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: `${firstname} ${lastname}`,
+          email,
+          password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Something went wrong");
+        return;
+      }
+
+      // ✅ Redirect after successful signup
+      navigate("/");
+    } catch (err) {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Inline styles object
   const styles = {
     container: {
       display: 'flex',
@@ -47,9 +75,10 @@ const Signup = () => {
       fontSize: '1rem',
       cursor: 'pointer',
     },
-    buttonHover: {
-      backgroundColor: '#45a049',
-    }
+    message: {
+      marginTop: '10px',
+      color: 'red',
+    },
   };
 
   return (
@@ -62,6 +91,7 @@ const Signup = () => {
           value={firstname}
           onChange={(e) => setFirstname(e.target.value)}
           style={styles.input}
+          required
         />
         <input
           type="text"
@@ -69,6 +99,7 @@ const Signup = () => {
           value={lastname}
           onChange={(e) => setLastname(e.target.value)}
           style={styles.input}
+          required
         />
         <input
           type="email"
@@ -76,6 +107,7 @@ const Signup = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           style={styles.input}
+          required
         />
         <input
           type="password"
@@ -83,8 +115,12 @@ const Signup = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           style={styles.input}
+          required
         />
-        <button type="submit" style={styles.button}>Sign Up</button>
+        <button type="submit" style={styles.button} disabled={loading}>
+          {loading ? "Signing up..." : "Sign Up"}
+        </button>
+        {error && <p style={styles.message}>{error}</p>}
       </form>
     </div>
   );
