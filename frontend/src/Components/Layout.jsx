@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import Navbar from "../Components/Navbar";
-import Sidebar from "../Components/Sidebar";
-import "../styles/layout.scss";
+import React, { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import Navbar from './Navbar';
+import Sidebar from './Sidebar';
+import '../styles/layout.scss';
 
-export default function Dashboard() {
+export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -11,9 +12,8 @@ export default function Dashboard() {
       <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <main className="main-content">
-        <h1>Dashboard</h1>
-        {/* Add your dashboard content here */}
+        <Outlet />
       </main>
     </div>
   );
-}
+} 

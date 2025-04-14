@@ -1,36 +1,42 @@
 .sidebar {
-  --sidebar-bg: #212529;
-  --brand-bg: #000;
-  --accent-color: #c70f61;
-  --text-color: #fff;
-  --hover-transition: 0.3s ease-in-out;
+  --sidebar-bg: var(--bg-secondary);
+  --brand-bg: var(--bg-primary);
+  --accent-color: var(--accent-color);
+  --text-color: var(--text-primary);
+  --hover-bg: var(--hover-bg);
+  --border-color: var(--border-color);
+  --hover-transition: var(--transition-speed);
   --link-gap: 0.7rem;
   --link-padding: 0.75rem;
   --link-radius: 0.5rem;
   --active-indicator-width: 4px;
 
-  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 64px; // Height of navbar
+  height: calc(100vh - 64px);
+  width: 250px;
   background-color: var(--sidebar-bg);
   color: var(--text-color);
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 10;
+  border-right: 1px solid var(--border-color);
+  transition: background-color var(--hover-transition), color var(--hover-transition);
 
   .brand {
     background-color: var(--brand-bg);
-    min-height: 80px; // Better than percentage for consistency
+    min-height: 80px;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--border-color);
 
     h2 {
-      font-weight: 900;
-      letter-spacing: 0.1em; // Use em instead of vw for consistency
+      font-weight: 700;
+      letter-spacing: 0.05em;
       margin: 0;
-      font-size: clamp(1.25rem, 1.5vw, 1.5rem); // Responsive font size
+      font-size: 1.5rem;
       transition: color var(--hover-transition);
       white-space: nowrap;
 
@@ -64,7 +70,6 @@
 
       .link-button {
         color: var(--text-color);
-        text-transform: uppercase;
         text-decoration: none;
         display: flex;
         align-items: center;
@@ -75,12 +80,11 @@
           color var(--hover-transition),
           background-color var(--hover-transition);
         font-size: 0.875rem;
-        letter-spacing: 0.05em;
         position: relative;
 
         &:hover {
           color: var(--accent-color);
-          background-color: rgba(255, 255, 255, 0.05);
+          background-color: var(--hover-bg);
         }
 
         &:focus-visible {
@@ -88,16 +92,21 @@
           outline-offset: 2px;
         }
 
-        svg {
-          font-size: 1.25rem; // Better icon sizing
+        .nav-icon {
+          font-size: 1.25rem;
           flex-shrink: 0;
+          transition: color var(--hover-transition);
+        }
+
+        .nav-text {
+          transition: color var(--hover-transition);
         }
       }
 
       .active {
         color: var(--accent-color);
         font-weight: 600;
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: var(--hover-bg);
 
         &::before {
           content: '';
@@ -110,14 +119,25 @@
           background-color: var(--accent-color);
           border-radius: 0 var(--active-indicator-width) var(--active-indicator-width) 0;
         }
+
+        .nav-icon {
+          color: var(--accent-color);
+        }
       }
     }
   }
 
   // Responsive adjustments
   @media (max-width: 768px) {
-    height: auto;
-    min-height: 100vh;
+    position: fixed;
+    width: 100%;
+    height: calc(100vh - 64px);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    
+    &.is-active {
+      transform: translateX(0);
+    }
     
     .brand {
       min-height: 60px;
@@ -134,7 +154,7 @@
           padding: 0.5rem;
           font-size: 0.75rem;
           
-          svg {
+          .nav-icon {
             font-size: 1rem;
           }
         }

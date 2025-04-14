@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
 import DepartmentForm from './DepartmentForm'; // You'll create this next
+import Navbar from "../Components/Navbar";
+import Sidebar from "../Components/Sidebar";
+import "../styles/layout.scss";
 import './Departments.scss';
 
 const Departments = () => {
@@ -10,6 +13,7 @@ const Departments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentDepartment, setCurrentDepartment] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   // Mock data - replace with API calls in a real app
@@ -71,11 +75,19 @@ const Departments = () => {
   };
 
   return (
-    <div className="departments-container">
-      <div className="departments-header">
-        <h2>Departments</h2>
-        <div className="actions">
-          <div className="search-box">
+    <div className="app-layout">
+      <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <main className="main-content">
+        <div className="departments-page">
+          <div className="departments-header">
+            <h1>Departments</h1>
+            <button className="add-button" onClick={handleAddDepartment}>
+              <FiPlus /> Add Department
+            </button>
+          </div>
+
+          <div className="search-container">
             <FiSearch className="search-icon" />
             <input
               type="text"
@@ -84,66 +96,28 @@ const Departments = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn-primary" onClick={handleAddDepartment}>
-            <FiPlus /> Add Department
-          </button>
+
+          <div className="departments-grid">
+            {filteredDepartments.map((department) => (
+              <div key={department.id} className="department-card">
+                <div className="department-info">
+                  <h3>{department.name}</h3>
+                  <p>Manager: {department.manager}</p>
+                  <p>Employees: {department.employeeCount}</p>
+                </div>
+                <div className="department-actions">
+                  <button onClick={() => handleEdit(department)}>
+                    <FiEdit2 />
+                  </button>
+                  <button onClick={() => handleDelete(department.id)}>
+                    <FiTrash2 />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-
-      <div className="departments-table">
-        {filteredDepartments.length === 0 ? (
-          <div className="no-results">No departments found</div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Department Name</th>
-                <th>Manager</th>
-                <th>Employees</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredDepartments.map((department) => (
-                <tr key={department.id}>
-                  <td>{department.name}</td>
-                  <td>{department.manager}</td>
-                  <td>
-                    <button 
-                      className="employee-count"
-                      onClick={() => handleViewEmployees(department.id)}
-                    >
-                      {department.employeeCount} employees
-                    </button>
-                  </td>
-                  <td>
-                    <button 
-                      className="btn-icon edit"
-                      onClick={() => handleEdit(department)}
-                    >
-                      <FiEdit2 />
-                    </button>
-                    <button
-                      className="btn-icon delete"
-                      onClick={() => handleDelete(department.id)}
-                    >
-                      <FiTrash2 />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
-      {isFormOpen && (
-        <DepartmentForm
-          department={currentDepartment}
-          onClose={() => setIsFormOpen(false)}
-          onSubmit={handleSubmit}
-        />
-      )}
+      </main>
     </div>
   );
 };

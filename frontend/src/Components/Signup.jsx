@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "./auth.css";
+import "../styles/auth.css";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
+  const [role, setRole] = useState("user"); // default role
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -23,7 +24,8 @@ const Signup = () => {
         body: JSON.stringify({
           name: `${firstname} ${lastname}`,
           email,
-          password
+          password,
+          role,
         }),
       });
 
@@ -78,6 +80,21 @@ const Signup = () => {
               onChange={(e) => setLastname(e.target.value)}
               required
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="role" className="form-label">Role</label>
+            <select
+              id="role"
+              className="auth-input"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              required
+            >
+              <option value="Employee">Employee</option>
+              <option value="Admin">Admin</option>
+              <option value="Manager">Manager</option>
+            </select>
           </div>
 
           <div className="form-group">

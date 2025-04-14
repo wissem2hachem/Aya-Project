@@ -8,9 +8,9 @@ import {
 } from "react-icons/md";
 import { AiFillSetting } from "react-icons/ai";
 import { FaUserTie, FaUserCheck } from "react-icons/fa";
-import "./sidebar.scss";
+import "../styles/sidebar.scss";
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { pathname } = useLocation();
   
   const links = [
@@ -59,7 +59,7 @@ export default function Sidebar() {
   ];
 
   return (
-    <nav className="sidebar" aria-label="Main navigation">
+    <nav className={`sidebar ${isOpen ? 'is-active' : ''}`} aria-label="Main navigation">
       <div className="brand">
         <h2>
           HR<span>Manager</span>
@@ -75,6 +75,7 @@ export default function Sidebar() {
               }
               aria-label={link.ariaLabel}
               aria-current={pathname === link.path ? "page" : undefined}
+              onClick={onClose}
             >
               <link.icon className="nav-icon" aria-hidden="true" />
               <span className="nav-text">{link.title}</span>

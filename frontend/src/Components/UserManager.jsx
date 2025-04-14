@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import "./UserManager.css";
-
-
+import "../styles/UserManager.css";
+import Navbar from "./Navbar";
+import Sidebar from "./Sidebar";
+import "../styles/layout.scss";
 
 const UserManager = () => {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [editId, setEditId] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const API_URL = "http://localhost:5000/api/users";
 
@@ -55,54 +57,60 @@ const UserManager = () => {
   };
 
   return (
-    <div className="user-manager">
-    <h2>Manage Users</h2>
-    <form onSubmit={handleSubmit}>
-      <input
-        placeholder="Name"
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-        required
-      />
-      <input
-        placeholder="Email"
-        value={form.email}
-        onChange={(e) => setForm({ ...form, email: e.target.value })}
-        required
-      />
-      <input
-        placeholder="Password"
-        type="password"
-        value={form.password}
-        onChange={(e) => setForm({ ...form, password: e.target.value })}
-        required={!editId}
-      />
-      <button type="submit">{editId ? "Update" : "Create"}</button>
-    </form>
-  
-    <table className="user-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((user) => (
-          <tr key={user._id}>
-            <td>{user.name}</td>
-            <td>{user.email}</td>
-            <td>
-              <button onClick={() => handleEdit(user)}>Edit</button>
-              <button onClick={() => handleDelete(user._id)}>Delete</button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
-  
+    <div className="app-layout">
+      <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <main className="main-content">
+        <h1>User Manager</h1>
+        <div className="user-manager">
+          <h2>Manage Users</h2>
+          <form onSubmit={handleSubmit}>
+            <input
+              placeholder="Name"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              required
+            />
+            <input
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+            />
+            <input
+              placeholder="Password"
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required={!editId}
+            />
+            <button type="submit">{editId ? "Update" : "Create"}</button>
+          </form>
+        
+          <table className="user-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user._id}>
+                  <td>{user.name}</td>
+                  <td>{user.email}</td>
+                  <td>
+                    <button onClick={() => handleEdit(user)}>Edit</button>
+                    <button onClick={() => handleDelete(user._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
   );
 };
 

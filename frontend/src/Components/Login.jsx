@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "./auth.css";
+import {jwtDecode} from "jwt-decode"
+import "../styles/login.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,15 +23,22 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
         credentials: "include",
       });
-
-      const data = await response.json();
-
+      const data= await response.json();
       if (!response.ok) {
-        setError(data.message || "Login failed. Please try again.");
+        setError(data.message|| "Login failed. Please try again.");
         return;
       }
-
-      navigate("/");
+      const token=data.token;
+      localStorage.setItem('token',token)
+      const user=jwtDecode(localStorage.getItem('token'))
+      if(user.role==='Admin'){
+        navigate("/admin");
+      }
+      else if(user.role==="Manager")
+      {navigate("/user-manager");}
+      else{
+        navigate('/employees')
+      }
     } catch (error) {
       console.error("Error logging in:", error);
       setError("Network error. Please check your connection and try again.");

@@ -1,0 +1,21 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color var(--transition-speed), color var(--transition-speed);
+
+  .main-content {
+    flex: 1;
+    margin-left: 250px;
+    margin-top: 64px;
+    padding: 1.5rem;
+    transition: margin-left var(--transition-speed);
+
+    @media (max-width: 768px) {
+      margin-left: 0;
+      margin-top: 64px;
+      padding: 1rem;
+    }
+  }
+} 
