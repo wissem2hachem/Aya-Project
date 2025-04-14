@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import "./auth.css";
 
 const Signup = () => {
-  const [email, setEmail] = useState(""); 
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [firstname, setFirstname] = useState("");  
-  const [lastname, setLastname] = useState("");    
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const navigate = useNavigate(); // 👈 React Router navigation hook
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,7 +34,6 @@ const Signup = () => {
         return;
       }
 
-      // ✅ Redirect after successful signup
       navigate("/");
     } catch (err) {
       setError("Network error. Please try again.");
@@ -43,85 +42,93 @@ const Signup = () => {
     }
   };
 
-  const styles = {
-    container: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      marginTop: '50px',
-    },
-    heading: {
-      fontSize: '2rem',
-      marginBottom: '20px',
-    },
-    form: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '300px',
-    },
-    input: {
-      padding: '10px',
-      margin: '10px 0',
-      border: '1px solid #ccc',
-      borderRadius: '5px',
-      fontSize: '1rem',
-    },
-    button: {
-      padding: '10px',
-      backgroundColor: '#4CAF50',
-      color: 'white',
-      border: 'none',
-      borderRadius: '5px',
-      fontSize: '1rem',
-      cursor: 'pointer',
-    },
-    message: {
-      marginTop: '10px',
-      color: 'red',
-    },
-  };
-
   return (
-    <div style={styles.container}>
-      <h2 style={styles.heading}>Signup</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <input
-          type="text"
-          placeholder="Enter your first name"
-          value={firstname}
-          onChange={(e) => setFirstname(e.target.value)}
-          style={styles.input}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Enter your last name"
-          value={lastname}
-          onChange={(e) => setLastname(e.target.value)}
-          style={styles.input}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Enter your email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={styles.input}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={styles.input}
-          required
-        />
-        <button type="submit" style={styles.button} disabled={loading}>
-          {loading ? "Signing up..." : "Sign Up"}
-        </button>
-        {error && <p style={styles.message}>{error}</p>}
-      </form>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-logo">CollabHub</div>
+          <h1 className="auth-title">Create Account</h1>
+          <p className="auth-subtitle">Join thousands of teams worldwide</p>
+        </div>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="firstname" className="form-label">First Name</label>
+            <input
+              id="firstname"
+              type="text"
+              className="auth-input"
+              placeholder="Enter your first name"
+              value={firstname}
+              onChange={(e) => setFirstname(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="lastname" className="form-label">Last Name</label>
+            <input
+              id="lastname"
+              type="text"
+              className="auth-input"
+              placeholder="Enter your last name"
+              value={lastname}
+              onChange={(e) => setLastname(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input
+              id="email"
+              type="email"
+              className="auth-input"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+              id="password"
+              type="password"
+              className="auth-input"
+              placeholder="Create a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="auth-btn auth-btn--primary"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="auth-loading"></span>
+                Creating account...
+              </>
+            ) : (
+              "Create Account"
+            )}
+          </button>
+        </form>
+
+        <div className="auth-links">
+          Already have an account?{" "}
+          <Link to="/login" className="auth-link">
+            Sign in
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };

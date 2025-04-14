@@ -10,6 +10,8 @@ import UserManager from "./Components/UserManager";
 import "./Components/Login";
 import Login from "./Components/Login";
 import Signup from "./Components/Signup";
+import LandingPage from "./Components/LandingPage";
+
 
 
 const ProtectedRoute = ({ element }) => {
@@ -24,7 +26,7 @@ function App() {
         <Routes>
           {/* Public Route - Login */}
 
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/employees" element={<Employees />} />
         <Route path = "/navbar" element={<Navbar />} />
         <Route path="/departments" element={<Departments />} />

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "./login.css"; 
+import { useNavigate, Link } from "react-router-dom";
+import "./auth.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -39,32 +39,68 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          className="input-field"
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          className="input-field"
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button className="login-btn" type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
-      <div className="links">
-        <a href="/forgot-password">Forgot Password?</a> | <a href="/signup">Sign Up</a>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-logo">CollabHub</div>
+          <h1 className="auth-title">Welcome Back</h1>
+          <p className="auth-subtitle">Sign in to continue to your account</p>
+        </div>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-group">
+            <label htmlFor="email" className="form-label">Email</label>
+            <input
+              id="email"
+              type="email"
+              className="auth-input"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password" className="form-label">Password</label>
+            <input
+              id="password"
+              type="password"
+              className="auth-input"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="auth-btn auth-btn--primary"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="auth-loading"></span>
+                Signing in...
+              </>
+            ) : (
+              "Sign In"
+            )}
+          </button>
+        </form>
+
+        <div className="auth-links">
+          <Link to="/forgot-password" className="auth-link">
+            Forgot Password?
+          </Link>
+          <span style={{ margin: "0 0.5rem" }}>•</span>
+          <Link to="/signup" className="auth-link">
+            Create an account
+          </Link>
+        </div>
       </div>
     </div>
   );
