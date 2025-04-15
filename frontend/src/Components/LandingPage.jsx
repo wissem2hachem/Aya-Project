@@ -1,6 +1,7 @@
 import React from "react";
 import "./LandingPage.css";
 import { Link } from "react-router-dom";
+import { FaCode, FaChartLine, FaPalette, FaShieldAlt, FaMobile, FaDatabase, FaBriefcase } from "react-icons/fa";
 
 function LandingPage() {
   return (
@@ -76,11 +77,23 @@ function LandingPage() {
               desc: "Streamline stakeholder processes with smart approval workflows.",
               icon: "⚡"
             },
+            {
+              title: "Career Opportunities",
+              desc: "Access to exclusive job opportunities and career growth within our network.",
+              icon: <FaBriefcase />,
+              link: "/job-offers",
+              isLink: true
+            }
           ].map((feature, index) => (
             <div className="landing__feature-card" key={index}>
               <div className="feature-icon">{feature.icon}</div>
               <h3>{feature.title}</h3>
               <p>{feature.desc}</p>
+              {feature.isLink && (
+                <Link to={feature.link} className="feature-link">
+                  Explore Opportunities →
+                </Link>
+              )}
             </div>
           ))}
         </div>

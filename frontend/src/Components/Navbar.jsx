@@ -16,12 +16,38 @@ export default function Navbar() {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      } else {
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDropdownOpen && !event.target.closest('.user-profile-dropdown')) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isDropdownOpen]);
 
   return (
     <header className="navbar" role="banner">
@@ -97,7 +123,10 @@ export default function Navbar() {
 
         {/* User Profile Dropdown */}
         <div className="navbar-item user-profile-dropdown">
-          <div className="user-profile">
+          <div 
+            className="user-profile"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
             <img 
               src={avatar} 
               alt="User Avatar" 
@@ -111,7 +140,7 @@ export default function Navbar() {
               <span className="user-status">Online</span>
             </div>
           </div>
-          <div className="dropdown-menu">
+          <div className={`dropdown-menu ${isDropdownOpen ? 'show' : ''}`}>
             <Link to="/profile" className="dropdown-item">Profile</Link>
             <Link to="/settings" className="dropdown-item">Settings</Link>
             <button 

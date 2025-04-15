@@ -11,6 +11,9 @@ import "./Components/Login";
 import Login from "./Components/Login";
 import Signup from "./Components/Signup";
 import LandingPage from "./Components/LandingPage";
+import Logout from "./Components/Logout";
+import JobOffers from "./Components/JobOffers";
+import JobApplicationForm from "./Components/JobApplicationForm";
 
 
 
@@ -34,7 +37,9 @@ function App() {
         <Route path = "/user-manager" element={<UserManager />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-
+        <Route path="/logout" element={<Logout />} />
+        <Route path="/job-offers" element={<JobOffers />} />
+        <Route path="/job-application" element={<JobApplicationForm />} />
         
 
         
