@@ -33,7 +33,7 @@ router.post("/login", async (req, res) => {
         // check if user exists
         const user = await User.findOne({email});
         if(!user) {
-            return res.status(400).json({message: "Invalid credentials"});
+            return res.status(400).json({message: "Invalid emil"});
         }
         //compare password
         const isMatch = await bcrypt.compare(password, user.password);

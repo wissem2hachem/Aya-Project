@@ -43,7 +43,7 @@ function LandingPage() {
             </div>
           </div>
           <div className="landing__hero-image">
-            <img src="illustration.png" alt="Collaboration Illustration" className="hero-image" />
+            <img src="/images/illustration.png" alt="Collaboration Illustration" className="hero-image" />
           </div>
         </div>
       </header>
@@ -76,6 +76,11 @@ function LandingPage() {
               desc: "Streamline stakeholder processes with smart approval workflows.",
               icon: "⚡"
             },
+            {
+              title: "Job Offers",
+              desc: "Find and post job opportunities, connect with potential employers and candidates.",
+              icon: "💼"
+            }
           ].map((feature, index) => (
             <div className="landing__feature-card" key={index}>
               <div className="feature-icon">{feature.icon}</div>

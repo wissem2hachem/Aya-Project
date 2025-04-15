@@ -1,13 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaRegEnvelope, FaEnvelope, FaUserCircle, FaCog } from "react-icons/fa";
+import {
+  IoMdNotificationsOutline,
+  IoMdNotifications,
+  IoMdMenu,
+  IoMdClose,
+} from "react-icons/io";
+import { FaSearch, FaRegEnvelope, FaEnvelope, FaUserCircle, FaCog } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
 import "../styles/navbar.scss";
 
 export default function Navbar({ onMenuClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [hasNotifications, setHasNotifications] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
   const avatar = "https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff";
@@ -16,75 +24,94 @@ export default function Navbar({ onMenuClick }) {
     try {
       await fetch("http://localhost:5000/api/auth/logout", {
         method: "POST",
-        credentials: "include", // if your backend needs cookies/session
+        credentials: "include",
       });
-
       localStorage.removeItem("token");
-      navigate("/login"); // optional: redirect to login after logout
+      navigate("/login");
     } catch (err) {
       console.error("Logout failed:", err);
     }
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDropdownOpen && !event.target.closest(".user-profile-dropdown")) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDropdownOpen]);
+
   return (
-    <header className="navbar">
+    <header className="navbar" role="banner">
+      {/* Brand and Menu Toggle */}
       <div className="navbar-brand">
         <button
           className="menu-toggle"
-          onClick={onMenuClick}
+          onClick={() => {
+            setIsMenuOpen(!isMenuOpen);
+            if (onMenuClick) onMenuClick(); // optional external handler
+          }}
           aria-label="Toggle menu"
         >
-          <span className="hamburger"></span>
+          {isMenuOpen ? <IoMdClose /> : <IoMdMenu />}
         </button>
         <Link to="/dashboard" className="logo">
           <span className="logo-text">HRMS</span>
         </Link>
       </div>
 
+      {/* Search */}
       <div className="search-container">
-        <input type="text" placeholder="Search..." aria-label="Search" />
+        <label htmlFor="search-input" className="visually-hidden">
+          Search
+        </label>
+        <input
+          id="search-input"
+          type="search"
+          placeholder="Search employees, projects, or tasks..."
+          aria-label="Search"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
         <button className="search-button" aria-label="Search">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M19 19L14.65 14.65"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <FaSearch />
         </button>
       </div>
 
+      {/* Navbar Actions */}
       <div className="navbar-end">
+        {/* Notifications */}
+        <div className="navbar-item">
+          <button
+            className="icon-button notification-button"
+            aria-label={`Notifications ${hasNotifications ? '(has unread)' : ''}`}
+            onClick={() => setHasNotifications(!hasNotifications)}
+          >
+            {hasNotifications ? (
+              <IoMdNotifications />
+            ) : (
+              <IoMdNotificationsOutline />
+            )}
+            {hasNotifications && <span className="badge" aria-hidden="true"></span>}
+          </button>
+        </div>
+
+        {/* Messages */}
         <div className="navbar-item">
           <button
             className="icon-button message-button"
             aria-label={`Messages ${hasUnreadMessages ? '(has unread)' : ''}`}
             onClick={() => setHasUnreadMessages(!hasUnreadMessages)}
           >
-            {hasUnreadMessages ? (
-              <FaEnvelope aria-hidden="true" />
-            ) : (
-              <FaRegEnvelope aria-hidden="true" />
-            )}
+            {hasUnreadMessages ? <FaEnvelope /> : <FaRegEnvelope />}
             {hasUnreadMessages && <span className="badge" aria-hidden="true"></span>}
           </button>
         </div>
 
+        {/* Profile Dropdown */}
         <div className="navbar-item user-profile-dropdown">
           <div
             className="user-profile"
@@ -108,28 +135,24 @@ export default function Navbar({ onMenuClick }) {
             </div>
           </div>
 
-          {isDropdownOpen && (
-            <div className="dropdown-menu is-active">
-              <Link to="/profile" className="dropdown-item">
-                <FaUserCircle />
-                <span>Profile</span>
-              </Link>
-              <Link to="/settings" className="dropdown-item">
-                <FaCog />
-                <span>Settings</span>
-              </Link>
-              <button
-                className="dropdown-item logout-button"
-                onClick={handleLogout}
-              >
-                <MdLogout />
-                <span>Logout</span>
-              </button>
-            </div>
-          )}
+          <div className={`dropdown-menu ${isDropdownOpen ? "show" : ""}`}>
+            <Link to="/profile" className="dropdown-item">
+              <FaUserCircle />
+              <span>Profile</span>
+            </Link>
+            <Link to="/settings" className="dropdown-item">
+              <FaCog />
+              <span>Settings</span>
+            </Link>
+            <button className="dropdown-item logout-button" onClick={handleLogout}>
+              <MdLogout />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       <div className={`mobile-menu ${isMenuOpen ? "is-active" : ""}`}>
         <Link to="/dashboard" className="mobile-menu-item">Dashboard</Link>
         <Link to="/employees" className="mobile-menu-item">Employees</Link>

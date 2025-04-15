@@ -24,10 +24,23 @@ function App() {
         <Route path="/signup" element={<Signup />} />
 
         {/* Protected Routes */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/employees" element={<Employees />} />
-        <Route path="/departments" element={<Departments />} />
-        <Route path="/user-manager" element={<UserManager />} /> 
+        <Route
+          path="/dashboard"
+          element={<ProtectedRoute element={<Dashboard />} />}
+        />
+          <Route
+          path="/employees"
+          element={<ProtectedRoute element={<Employees />} />}
+        />
+          <Route
+          path="/depaartments"
+          element={<ProtectedRoute element={<Departments />} />}
+        />
+          <Route
+          path="/usermanager"
+          element={<ProtectedRoute element={<UserManager />} />}
+        />
+        
       </Routes>
     </Router>
   );
