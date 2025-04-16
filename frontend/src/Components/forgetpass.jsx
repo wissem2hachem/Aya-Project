@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import '../styles/forgotpass.css';
+import './forgetpass.css';
 
 const ForgotPassword = () => {
   const [formData, setFormData] = useState({
@@ -226,3 +226,6 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+
+
+

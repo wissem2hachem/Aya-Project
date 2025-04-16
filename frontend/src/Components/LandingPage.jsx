@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
 import "../styles/LandingPage.css";
 import { Link } from "react-router-dom";
+import { IoMdMoon, IoMdSunny } from "react-icons/io";
+import { ThemeContext } from "../context/ThemeContext";
 
 function LandingPage() {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+  
   return (
     <div className="landing">
       {/* Header */}
@@ -18,6 +22,13 @@ function LandingPage() {
             <li><a href="#our-story">Our Story</a></li>
           </ul>
           <div className="landing__nav-buttons">
+            <button 
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              aria-label={`Toggle ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? <IoMdMoon /> : <IoMdSunny />}
+            </button>
             <Link to="/login" className="btn btn--secondary">Log In</Link>
             <Link to="/signup" className="btn btn--primary">Sign Up</Link>
           </div>
