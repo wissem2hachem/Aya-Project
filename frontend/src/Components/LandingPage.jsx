@@ -59,34 +59,39 @@ function LandingPage() {
             {
               title: "Smart File Management",
               desc: "Click to add comments directly on file stamps and enjoy collaboration benefits.",
-              icon: "📁"
+              icon: "📁",
+              path: "/features/file-management"
             },
             {
               title: "Review Management",
               desc: "Ensure reviews are consistent and manage the process efficiently.",
-              icon: "✅"
+              icon: "✅",
+              path: "/features/review-management"
             },
             {
               title: "Real-time Status Tracking",
               desc: "24/7 access to an overview of your work status with live updates.",
-              icon: "📊"
+              icon: "📊",
+              path: "/features/status-tracking"
             },
             {
               title: "Automated Approvals",
               desc: "Streamline stakeholder processes with smart approval workflows.",
-              icon: "⚡"
+              icon: "⚡",
+              path: "/features/automated-approvals"
             },
             {
               title: "Job Offers",
               desc: "Find and post job opportunities, connect with potential employers and candidates.",
-              icon: "💼"
+              icon: "💼",
+              path: "/features/job-offers"
             }
           ].map((feature, index) => (
-            <div className="landing__feature-card" key={index}>
+            <Link to={feature.path} key={index} className="landing__feature-card">
               <div className="feature-icon">{feature.icon}</div>
               <h3>{feature.title}</h3>
               <p>{feature.desc}</p>
-            </div>
+            </Link>
           ))}
         </div>
       </section>

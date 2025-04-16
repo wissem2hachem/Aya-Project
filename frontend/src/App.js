@@ -8,6 +8,9 @@ import UserManager from "./Components/UserManager";
 import Login from "./Components/Login";
 import Signup from "./Components/Signup";
 import LandingPage from "./Components/LandingPage";
+import JobOffers from "./Components/features/JobOffers";
+import JobApplicationForm from "./Components/features/jobApplicationForm";
+
 
 const ProtectedRoute = ({ element }) => {
   const isAuthenticated = localStorage.getItem("token");
@@ -22,6 +25,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path = "/features/job-offers" element = {< JobOffers/>}/>
+        <Route path = "/jobApplication" element = {< JobApplicationForm/>}/>
 
         {/* Protected Routes */}
         <Route
