@@ -10,7 +10,6 @@ import Payroll from "./pages/Payroll";
 import UserManager from "./Components/UserManager";
 import Login from "./Components/Login";
 import Signup from "./Components/Signup";
-import ForgotPassword from "./Components/forgetpass";
 import LandingPage from "./Components/LandingPage";
 import JobOffers from "./Components/features/JobOffers";
 import JobApplicationForm from "./Components/features/jobApplicationForm";
@@ -29,7 +28,6 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/features/job-offers" element={<JobOffers />} />
         <Route path="/jobApplication" element={<JobApplicationForm />} />
 

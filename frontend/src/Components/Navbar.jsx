@@ -1,18 +1,15 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   IoMdNotificationsOutline,
   IoMdNotifications,
   IoMdMenu,
   IoMdClose,
-  IoMdMoon,
-  IoMdSunny
 } from "react-icons/io";
 import { FaSearch, FaRegEnvelope, FaEnvelope, FaUserCircle, FaCog } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
 import "../styles/navbar.scss";
 import LogoutConfirmation from "./LogoutConfirmation";
-import { ThemeContext } from "../context/ThemeContext";
 
 export default function Navbar({ onMenuClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,7 +19,6 @@ export default function Navbar({ onMenuClick }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useContext(ThemeContext);
 
   const avatar = "https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff";
 
@@ -100,18 +96,6 @@ export default function Navbar({ onMenuClick }) {
 
         {/* Navbar Actions */}
         <div className="navbar-end">
-          {/* Theme Toggle */}
-          <div className="navbar-item">
-            <button
-              className="icon-button theme-toggle-button"
-              aria-label={`Toggle ${theme === 'light' ? 'dark' : 'light'} mode`}
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? <IoMdMoon /> : <IoMdSunny />}
-            </button>
-          </div>
-          
           {/* Notifications */}
           <div className="navbar-item">
             <button

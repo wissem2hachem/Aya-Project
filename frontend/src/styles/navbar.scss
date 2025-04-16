@@ -1,6 +1,5 @@
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #f3f4f6;
   --card-bg: #ffffff;
   --text-primary: #1f2937;
   --text-secondary: #4b5563;
@@ -12,22 +11,6 @@
   --border-color: #e5e7eb;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   --transition-speed: 0.2s;
-  --navbar-bg: #ffffff;
-}
-
-/* Dark mode styles */
-[data-theme='dark'] {
-  --bg-primary: #111827;
-  --bg-secondary: #1a202c;
-  --card-bg: #1f2937;
-  --text-primary: #f9fafb;
-  --text-secondary: #e5e7eb;
-  --text-tertiary: #9ca3af;
-  --input-bg: #374151;
-  --hover-bg: #374151;
-  --border-color: #4b5563;
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  --navbar-bg: #1f2937;
 }
 
 .navbar {
@@ -35,14 +18,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 2rem;
-  background-color: var(--navbar-bg);
+  background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 1000;
-  transition: background-color var(--transition-speed);
 
   .navbar-brand {
     display: flex;
@@ -54,9 +36,8 @@
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
-      color: var(--text-primary);
+      color: #333;
       display: none;
-      transition: color var(--transition-speed);
 
       @media (max-width: 768px) {
         display: block;
@@ -65,10 +46,9 @@
 
     .logo {
       text-decoration: none;
-      color: var(--text-primary);
+      color: #333;
       font-size: 1.5rem;
       font-weight: bold;
-      transition: color var(--transition-speed);
     }
   }
 
@@ -82,16 +62,13 @@
       width: 100%;
       padding: 0.5rem 1rem;
       padding-right: 2.5rem;
-      border: 1px solid var(--border-color);
+      border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 0.9rem;
-      background-color: var(--input-bg);
-      color: var(--text-primary);
-      transition: all var(--transition-speed);
 
       &:focus {
         outline: none;
-        border-color: var(--accent-color);
+        border-color: #007bff;
       }
     }
 
@@ -102,9 +79,8 @@
       transform: translateY(-50%);
       background: none;
       border: none;
-      color: var(--text-secondary);
+      color: #666;
       cursor: pointer;
-      transition: color var(--transition-speed);
     }
   }
 
@@ -120,11 +96,10 @@
         background: none;
         border: none;
         font-size: 1.2rem;
-        color: var(--text-primary);
+        color: #333;
         cursor: pointer;
         padding: 0.5rem;
         position: relative;
-        transition: color var(--transition-speed);
 
         .badge {
           position: absolute;
@@ -135,19 +110,6 @@
           background-color: #ff4444;
           border-radius: 50%;
         }
-      }
-    }
-
-    .theme-toggle-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 4px;
-      transition: background-color var(--transition-speed), color var(--transition-speed);
-
-      &:hover {
-        background-color: var(--hover-bg);
-        color: var(--accent-color);
       }
     }
 
@@ -173,8 +135,6 @@
             margin: 0;
             font-size: 0.9rem;
             font-weight: 600;
-            color: var(--text-primary);
-            transition: color var(--transition-speed);
           }
 
           .user-status {
@@ -188,12 +148,11 @@
         position: absolute;
         top: 100%;
         right: 0;
-        background-color: var(--card-bg);
+        background-color: #fff;
         border-radius: 4px;
-        box-shadow: var(--shadow);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         min-width: 200px;
         display: none;
-        transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
 
         &.show {
           display: block;
@@ -205,16 +164,16 @@
           gap: 0.5rem;
           padding: 0.75rem 1rem;
           text-decoration: none;
-          color: var(--text-primary);
-          transition: background-color var(--transition-speed), color var(--transition-speed);
+          color: #333;
+          transition: background-color 0.2s;
 
           &:hover {
-            background-color: var(--hover-bg);
+            background-color: #f8f9fa;
           }
 
           &.logout-button {
             color: #dc3545;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid #eee;
           }
         }
       }
@@ -228,11 +187,11 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--bg-primary);
+    background-color: #fff;
     padding: 2rem;
     z-index: 1001;
     transform: translateX(-100%);
-    transition: transform 0.3s ease, background-color var(--transition-speed);
+    transition: transform 0.3s ease;
 
     &.is-active {
       transform: translateX(0);
@@ -242,10 +201,9 @@
       display: block;
       padding: 1rem 0;
       text-decoration: none;
-      color: var(--text-primary);
+      color: #333;
       font-size: 1.2rem;
-      border-bottom: 1px solid var(--border-color);
-      transition: color var(--transition-speed), border-bottom-color var(--transition-speed);
+      border-bottom: 1px solid #eee;
     }
   }
 
