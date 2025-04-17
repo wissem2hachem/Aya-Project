@@ -12,9 +12,9 @@ function LandingPage() {
             <span className="logo-text">CollabHub</span>
           </div>
           <ul className="landing__nav-list">
-            <li><a href="#services">Services</a></li>
+            
             <li><a href="#features">Features</a></li>
-            <li><a href="#platform">Platform</a></li>
+            
             <li><a href="#our-story">Our Story</a></li>
           </ul>
           <div className="landing__nav-buttons">
@@ -145,3 +145,5 @@ function LandingPage() {
 
 
 export default LandingPage;
+
+
