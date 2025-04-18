@@ -15,6 +15,10 @@ const userSchema = new mongoose.Schema({
     role:{type:String ,required:true, enum:['Admin','Manager','Employee'], default:'Employee'},
     // User's hashed password
     password: { type: String, required: true },
+    
+    // Password reset fields
+    resetPasswordToken: { type: String, default: null },
+    resetPasswordExpires: { type: Date, default: null }
 },
 {
     // Automatically add createdAt and updatedAt timestamps

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import '../styles/forgotpass.css';
+import './forgetpass.css';
+import axios from 'axios';
 
 const ForgotPassword = () => {
   const [formData, setFormData] = useState({
@@ -80,17 +81,25 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      // Replace this with your actual API call
-      // const response = await api.sendPasswordResetEmail(formData.email);
+      // Make actual API call to backend to send reset email
+      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
+        email: formData.email
+      });
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Show success message and move to step 2
-      setStep(2);
-      setCountdown(60); // Set cooldown period
+      if (response.data.success) {
+        // Show success message and move to step 2
+        setStep(2);
+        setCountdown(60); // Set cooldown period
+      } else {
+        toast.error(response.data.message || 'Failed to send reset link. Please try again.');
+      }
     } catch (error) {
-      toast.error(error.message || 'Failed to send reset link. Please try again.');
+      console.error('Password reset error:', error);
+      toast.error(
+        error.response?.data?.message || 
+        'Failed to send reset link. Please check your internet connection and try again.'
+      );
+    } finally {
       setIsLoading(false);
     }
   };

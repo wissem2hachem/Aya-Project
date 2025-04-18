@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useContext } from "react";
 import "../styles/LandingPage.css";
 import { Link } from "react-router-dom";
+import { IoMdMoon, IoMdSunny } from "react-icons/io";
+import ThemeContext  from "../context/ThemeContext";
 
 function LandingPage() {
+  const { theme, toggleTheme } = useContext(ThemeContext);
+
   return (
     <div className="landing">
       {/* Header */}
@@ -12,12 +16,17 @@ function LandingPage() {
             <span className="logo-text">CollabHub</span>
           </div>
           <ul className="landing__nav-list">
-            
             <li><a href="#features">Features</a></li>
-            
             <li><a href="#our-story">Our Story</a></li>
           </ul>
           <div className="landing__nav-buttons">
+            <button
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              aria-label={`Toggle ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? <IoMdMoon /> : <IoMdSunny />}
+            </button>
             <Link to="/login" className="btn btn--secondary">Log In</Link>
             <Link to="/signup" className="btn btn--primary">Sign Up</Link>
           </div>
@@ -96,6 +105,60 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Our Story Section */}
+      <section className="landing__our-story" id="our-story">
+        <div className="section-header">
+          <h2>Our Story</h2>
+          <p className="section-subtitle">How CollabHub came to transform workplace collaboration</p>
+        </div>
+        <div className="our-story-container">
+          <div className="our-story-image">
+            <img src="/images/our-story.jpg" alt="CollabHub Team" className="story-image" />
+          </div>
+          <div className="our-story-content">
+            <div className="story-timeline">
+              <div className="timeline-item">
+                <div className="timeline-year">2019</div>
+                <div className="timeline-content">
+                  <h3>The Beginning</h3>
+                  <p>CollabHub was born out of frustration with existing collaboration tools. Our founders, Jane and Michael, experienced firsthand the challenges of managing complex projects across distributed teams.</p>
+                </div>
+              </div>
+              <div className="timeline-item">
+                <div className="timeline-year">2020</div>
+                <div className="timeline-content">
+                  <h3>First Launch</h3>
+                  <p>We launched our beta version with core file sharing and project management features. Despite the global pandemic, our team worked remotely to refine the platform based on early user feedback.</p>
+                </div>
+              </div>
+              <div className="timeline-item">
+                <div className="timeline-year">2021</div>
+                <div className="timeline-content">
+                  <h3>Rapid Growth</h3>
+                  <p>As remote work became the new normal, CollabHub experienced exponential growth. We secured our first round of funding and expanded our team to serve our growing user base.</p>
+                </div>
+              </div>
+              <div className="timeline-item">
+                <div className="timeline-year">Today</div>
+                <div className="timeline-content">
+                  <h3>Looking Forward</h3>
+                  <p>With over 10,000 teams using CollabHub daily, we're more committed than ever to our mission of transforming workplace collaboration. We continue to innovate and develop new features based on user feedback.</p>
+                </div>
+              </div>
+            </div>
+            <div className="story-values">
+              <h3>Our Core Values</h3>
+              <ul className="values-list">
+                <li><span className="value-icon">🤝</span> <strong>Collaboration</strong>: We believe in the power of teamwork</li>
+                <li><span className="value-icon">💡</span> <strong>Innovation</strong>: We continuously evolve our platform</li>
+                <li><span className="value-icon">👂</span> <strong>User-Focused</strong>: We listen to our users' needs</li>
+                <li><span className="value-icon">🛡️</span> <strong>Security</strong>: We protect your data like it's our own</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials Section */}
       <section className="landing__testimonials">
         <div className="section-header">
@@ -143,7 +206,4 @@ function LandingPage() {
   );
 }
 
-
 export default LandingPage;
-
-
