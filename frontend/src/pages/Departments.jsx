@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiSearch } from 'react-icons/fi';
 import DepartmentForm from './DepartmentForm'; // You'll create this next
-import Navbar from "../Components/Navbar";
-import Sidebar from "../Components/Sidebar";
-import "../styles/layout.scss";
 import './Departments.scss';
 
 const Departments = () => {
@@ -13,7 +10,6 @@ const Departments = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentDepartment, setCurrentDepartment] = useState(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   // Mock data - replace with API calls in a real app
@@ -75,49 +71,54 @@ const Departments = () => {
   };
 
   return (
-    <div className="app-layout">
-      <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      <main className="main-content">
-        <div className="departments-page">
-          <div className="departments-header">
-            <h1>Departments</h1>
-            <button className="add-button" onClick={handleAddDepartment}>
-              <FiPlus /> Add Department
-            </button>
-          </div>
+    <div className="departments-page">
+      <div className="departments-header">
+        <h1>Departments</h1>
+        <button className="add-button" onClick={handleAddDepartment}>
+          <FiPlus /> Add Department
+        </button>
+      </div>
 
-          <div className="search-container">
-            <FiSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search departments..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
+      <div className="search-container">
+        <FiSearch className="search-icon" />
+        <input
+          type="text"
+          placeholder="Search departments..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
 
-          <div className="departments-grid">
-            {filteredDepartments.map((department) => (
-              <div key={department.id} className="department-card">
-                <div className="department-info">
-                  <h3>{department.name}</h3>
-                  <p>Manager: {department.manager}</p>
-                  <p>Employees: {department.employeeCount}</p>
-                </div>
-                <div className="department-actions">
-                  <button onClick={() => handleEdit(department)}>
-                    <FiEdit2 />
-                  </button>
-                  <button onClick={() => handleDelete(department.id)}>
-                    <FiTrash2 />
-                  </button>
-                </div>
-              </div>
-            ))}
+      <div className="departments-grid">
+        {filteredDepartments.map((department) => (
+          <div key={department.id} className="department-card">
+            <div className="department-info">
+              <h3>{department.name}</h3>
+              <p>Manager: {department.manager}</p>
+              <p>Employees: {department.employeeCount}</p>
+            </div>
+            <div className="department-actions">
+              <button onClick={() => handleViewEmployees(department.id)}>
+                View Employees
+              </button>
+              <button onClick={() => handleEdit(department)}>
+                <FiEdit2 />
+              </button>
+              <button onClick={() => handleDelete(department.id)}>
+                <FiTrash2 />
+              </button>
+            </div>
           </div>
-        </div>
-      </main>
+        ))}
+      </div>
+
+      {isFormOpen && (
+        <DepartmentForm
+          department={currentDepartment}
+          onSubmit={handleSubmit}
+          onClose={() => setIsFormOpen(false)}
+        />
+      )}
     </div>
   );
 };
