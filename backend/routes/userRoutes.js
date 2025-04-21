@@ -1,4 +1,3 @@
-
 const express = require("express");
 const User = require("../models/User");
 const router = express.Router();
@@ -39,10 +38,10 @@ router.post("/create", async (req, res) => {
 //  Update User (UPDATE)
 router.put("/:id", async (req, res) => {
     try {
-      const { name, email } = req.body;
+      const { name, email, role } = req.body;
       const updatedUser = await User.findByIdAndUpdate(
         req.params.id,
-        { name, email },
+        { name, email, role },
         { new: true }
       );
       res.status(200).json(updatedUser);

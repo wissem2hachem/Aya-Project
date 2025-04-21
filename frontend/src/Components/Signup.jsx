@@ -7,7 +7,6 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
-  const [role, setRole] = useState("user"); // default role
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -25,7 +24,7 @@ const Signup = () => {
           name: `${firstname} ${lastname}`,
           email,
           password,
-          role,
+          role: "employee", // Default role is always employee
         }),
       });
 
@@ -36,7 +35,7 @@ const Signup = () => {
         return;
       }
 
-      navigate("/");
+      navigate("/login");
     } catch (err) {
       setError("Network error. Please try again.");
     } finally {
@@ -83,21 +82,6 @@ const Signup = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="role" className="form-label">Role</label>
-            <select
-              id="role"
-              className="auth-input"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-            >
-              <option value="Employee">Employee</option>
-              <option value="Admin">Admin</option>
-              <option value="Manager">Manager</option>
-            </select>
-          </div>
-
-          <div className="form-group">
             <label htmlFor="email" className="form-label">Email</label>
             <input
               id="email"
@@ -121,6 +105,10 @@ const Signup = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+          </div>
+
+          <div className="form-info">
+            <p>You'll be registered as an employee. HR administrators can later change your role if needed.</p>
           </div>
 
           <button

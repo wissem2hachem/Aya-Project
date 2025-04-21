@@ -1,0 +1,125 @@
+.access-denied-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px;
+}
+
+.access-denied-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.access-denied-icon {
+  color: #dc3545;
+  margin-bottom: 20px;
+  display: inline-flex;
+  padding: 16px;
+  background-color: rgba(220, 53, 69, 0.1);
+  border-radius: 50%;
+}
+
+.access-denied-card h1 {
+  color: #343a40;
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+
+.access-denied-message {
+  font-size: 1.1rem;
+  color: #495057;
+  margin-bottom: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.inline-icon {
+  color: #dc3545;
+}
+
+.role-info-box {
+  background-color: #f1f3f5;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.role-info-box h2 {
+  font-size: 1.2rem;
+  color: #212529;
+  margin-bottom: 10px;
+}
+
+.role-info-box ul {
+  margin-left: 20px;
+  color: #495057;
+}
+
+.role-info-box li {
+  margin-bottom: 5px;
+}
+
+.help-text {
+  color: #6c757d;
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.back-button,
+.dashboard-button {
+  padding: 12px 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.back-button {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #ced4da;
+}
+
+.back-button:hover {
+  background-color: #e9ecef;
+}
+
+.dashboard-button {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.dashboard-button:hover {
+  background-color: #0b5ed7;
+}
+
+@media (max-width: 640px) {
+  .access-denied-card {
+    padding: 20px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .access-denied-card h1 {
+    font-size: 1.75rem;
+  }
+} 

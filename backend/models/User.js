@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     
     // User's email address (must be unique)
     email: { type: String, required: true, unique: true },
-    role:{type:String ,required:true, enum:['Admin','Manager','Employee'], default:'Employee'},
+    role:{type:String ,required:true, enum:['employee','manager','hr'], default:'employee'},
     // User's hashed password
     password: { type: String, required: true },
     

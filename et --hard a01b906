@@ -1,0 +1,24 @@
+[33m04e613c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m HEAD@{0}: pull origin main: Fast-forward
+[33ma01b906[m HEAD@{1}: checkout: moving from main to main
+[33ma01b906[m HEAD@{2}: commit: landing page has been modified
+[33m029a17d[m HEAD@{3}: commit: forget password is working
+[33md574db6[m HEAD@{4}: pull origin main: Merge made by the 'ort' strategy.
+[33md2f58ec[m HEAD@{5}: reset: moving to HEAD
+[33md2f58ec[m HEAD@{6}: checkout: moving from main to main
+[33md2f58ec[m HEAD@{7}: pull origin main: Merge made by the 'ort' strategy.
+[33m56ac473[m HEAD@{8}: revert: Revert "Merge pull request #9 from NOURKARIA/main"
+[33m1482d6e[m HEAD@{9}: pull origin main: Fast-forward
+[33ma0bc4f1[m HEAD@{10}: pull origin main: Fast-forward
+[33m7ac3ebf[m HEAD@{11}: reset: moving to HEAD
+[33m7ac3ebf[m HEAD@{12}: commit: a
+[33m1ad8c1c[m HEAD@{13}: commit: v1
+[33m0909f6c[m HEAD@{14}: commit: update
+[33m6988091[m HEAD@{15}: commit: Enter e message here
+[33md1eada6[m HEAD@{16}: commit: CRUD
+[33mea5b7d9[m HEAD@{17}: commit: dashboard has been updated
+[33m775fd1f[m HEAD@{18}: commit: .
+[33mf978c91[m HEAD@{19}: commit (merge): dashboard template
+[33mb3a4b84[m HEAD@{20}: commit: dashboard template
+[33me650b0b[m HEAD@{21}: commit: second commit
+[33m3fb60d3[m HEAD@{22}: Branch: renamed refs/heads/master to refs/heads/main
+[33m3fb60d3[m HEAD@{24}: commit (initial): Aya commit

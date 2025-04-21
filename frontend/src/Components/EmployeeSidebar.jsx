@@ -2,67 +2,71 @@ import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   MdDashboard,
-  MdPeople,
   MdEventNote,
   MdOutlineAttachMoney,
 } from "react-icons/md";
-import { AiFillSetting } from "react-icons/ai";
-import { FaUserTie, FaUserCheck } from "react-icons/fa";
+import { FiCalendar, FiUser, FiFileText, FiClock, FiSettings } from "react-icons/fi";
 import "../styles/sidebar.scss";
 
-export default function Sidebar({ isOpen, onClose }) {
+export default function EmployeeSidebar({ isOpen, onClose }) {
   const { pathname } = useLocation();
   
   const links = [
     {
-      title: "Dashboard",
+      title: "My Dashboard",
       icon: MdDashboard,
-      path: "/dashboard",
-      ariaLabel: "Navigate to Dashboard",
+      path: "/employee/dashboard",
+      ariaLabel: "Navigate to My Dashboard",
     },
     {
-      title: "Employees",
-      icon: MdPeople,
-      path: "/employees",
-      ariaLabel: "Navigate to Employees",
+      title: "Profile",
+      icon: FiUser,
+      path: "/employee/profile",
+      ariaLabel: "Navigate to Profile",
     },
     {
       title: "Attendance",
-      icon: FaUserCheck,
-      path: "/attendance",
+      icon: FiClock,
+      path: "/employee/attendance",
       ariaLabel: "Navigate to Attendance",
     },
     {
       title: "Leave Requests",
-      icon: MdEventNote,
-      path: "/leave-requests",
+      icon: FiCalendar,
+      path: "/employee/leave-requests",
       ariaLabel: "Navigate to Leave Requests",
     },
     {
-      title: "Payroll",
+      title: "Payslips",
       icon: MdOutlineAttachMoney,
-      path: "/payroll",
-      ariaLabel: "Navigate to Payroll",
+      path: "/employee/payslips",
+      ariaLabel: "Navigate to Payslips",
     },
     {
-      title: "Recruitment",
-      icon: FaUserTie,
-      path: "/recruitment",
-      ariaLabel: "Navigate to Recruitment",
+      title: "Documents",
+      icon: FiFileText,
+      path: "/employee/documents",
+      ariaLabel: "Navigate to Documents",
     },
     {
-      title: "User Manager",
-      icon: AiFillSetting,
-      path: "/usermanager",
-      ariaLabel: "Navigate to User Manager",
+      title: "Calendar",
+      icon: MdEventNote,
+      path: "/employee/calendar",
+      ariaLabel: "Navigate to Calendar",
     },
+    {
+      title: "Settings",
+      icon: FiSettings,
+      path: "/employee/settings",
+      ariaLabel: "Navigate to Settings",
+    }
   ];
 
   return (
-    <nav className={`sidebar ${isOpen ? 'is-active' : ''}`} aria-label="Main navigation">
+    <nav className={`sidebar ${isOpen ? 'is-active' : ''}`} aria-label="Employee navigation">
       <div className="brand">
         <h2>
-          HR<span>Manager</span>
+          HR<span>Portal</span>
         </h2>
       </div>
       <ul className="links">
@@ -85,4 +89,4 @@ export default function Sidebar({ isOpen, onClose }) {
       </ul>
     </nav>
   );
-}
+} 

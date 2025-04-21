@@ -23,13 +23,13 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
         credentials: "include",
       });
-      const data= await response.json();
+      const data = await response.json();
       if (!response.ok) {
-        setError(data.message|| "Login failed. Please try again.");
+        setError(data.message || "Login failed. Please try again.");
         return;
       }
-      const token=data.token;
-      localStorage.setItem('token',token)
+      const token = data.token;
+      localStorage.setItem('token', token)
       
       // Redirect all users to dashboard regardless of role
       navigate('/dashboard');
