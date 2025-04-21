@@ -1,8 +1,11 @@
 import React from "react";
 import { FiUsers, FiCalendar, FiClock, FiBriefcase, FiDollarSign, FiBarChart2 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import "./Dashboard.scss";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   // Mock data for dashboard statistics
   const stats = [
     { id: 1, title: 'Total Employees', value: '128', icon: <FiUsers />, color: '#3498db' },
@@ -21,6 +24,12 @@ export default function Dashboard() {
     { id: 4, user: 'David Wilson', action: 'approved budget for Q3', time: 'Yesterday at 1:20 PM', avatar: 'https://ui-avatars.com/api/?name=DW&background=f39c12&color=fff' },
     { id: 5, user: 'Lisa Wang', action: 'onboarded 3 new employees', time: '2 days ago', avatar: 'https://ui-avatars.com/api/?name=LW&background=1abc9c&color=fff' }
   ];
+
+  // Navigation handlers for quick action buttons
+  const handleNavigateToEmployees = () => navigate('/employees');
+  const handleNavigateToAttendance = () => navigate('/attendance');
+  const handleNavigateToPayroll = () => navigate('/payroll');
+  const handleNavigateToDepartments = () => navigate('/departments');
 
   return (
     <div className="dashboard-page">
@@ -116,16 +125,32 @@ export default function Dashboard() {
         <div className="dashboard-card">
           <h2>Quick Actions</h2>
           <div className="actions-grid">
-            <button className="action-button">
+            <button 
+              className="action-button"
+              onClick={handleNavigateToEmployees}
+              aria-label="Manage Employees"
+            >
               <FiUsers /> Manage Employees
             </button>
-            <button className="action-button">
+            <button 
+              className="action-button"
+              onClick={handleNavigateToAttendance}
+              aria-label="View Attendance"
+            >
               <FiCalendar /> View Attendance
             </button>
-            <button className="action-button">
+            <button 
+              className="action-button"
+              onClick={handleNavigateToPayroll}
+              aria-label="Process Payroll"
+            >
               <FiDollarSign /> Process Payroll
             </button>
-            <button className="action-button">
+            <button 
+              className="action-button"
+              onClick={handleNavigateToDepartments}
+              aria-label="Manage Departments"
+            >
               <FiBriefcase /> Manage Departments
             </button>
           </div>
