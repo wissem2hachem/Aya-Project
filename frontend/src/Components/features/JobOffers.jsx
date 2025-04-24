@@ -124,7 +124,13 @@ const JobOffers = () => {
   const navigate = useNavigate();
 
   const handleApply = (jobId, jobTitle) => {
-    navigate('/jobApplication', { state: { jobId, jobTitle } });
+    // Force redirect to login page first
+    navigate('/login', { 
+      state: { 
+        from: '/jobApplication',
+        jobInfo: { jobId, jobTitle }
+      } 
+    });
   };
 
   return (

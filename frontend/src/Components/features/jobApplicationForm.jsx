@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/jobApplicationForm.scss';
 
@@ -7,6 +7,19 @@ const JobApplicationForm = () => {
   const location = useLocation();
   const jobId = location.state?.jobId;
   const jobTitle = location.state?.jobTitle;
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    console.log("Token in JobApplicationForm:", token);
+    
+    // Always redirect to login if accessed directly
+    if (!jobId || !jobTitle || !token) {
+      console.log("Missing job info or token, redirecting to login");
+      navigate('/login');
+      return;
+    }
+  }, [navigate, jobId, jobTitle]);
 
   const [formData, setFormData] = useState({
     firstName: '',

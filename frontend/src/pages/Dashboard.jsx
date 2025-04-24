@@ -1,10 +1,105 @@
-import React from "react";
-import { FiUsers, FiCalendar, FiClock, FiBriefcase, FiDollarSign, FiBarChart2 } from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiUsers, FiCalendar, FiClock, FiBriefcase, FiDollarSign, FiBarChart2, FiUser, FiEdit, FiCheckCircle, FiXCircle, FiInfo } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import "./Dashboard.scss";
+import { useAuth } from "../context/AuthContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const { userRole, hasPermission } = useAuth();
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const decoded = jwtDecode(token);
+        const userId = decoded._id;
+
+        const response = await axios.get(`http://localhost:5000/api/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        setUser(response.data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  // Fetch leave requests
+  useEffect(() => {
+    const fetchLeaveRequests = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        // Mock data for now, would be replaced with actual API call
+        // const response = await axios.get("http://localhost:5000/api/leave-requests?limit=3&status=pending", {
+        //   headers: {
+        //     Authorization: `Bearer ${token}`
+        //   }
+        // });
+        // setLeaveRequests(response.data);
+        
+        // Mock data for leave requests
+        const mockLeaveRequests = [
+          { 
+            id: 1, 
+            employee: 'Michael Brown', 
+            department: 'Engineering',
+            type: 'Sick Leave', 
+            from: '2023-06-15', 
+            to: '2023-06-16', 
+            status: 'pending',
+            avatar: 'https://ui-avatars.com/api/?name=MB&background=3498db&color=fff'
+          },
+          { 
+            id: 2, 
+            employee: 'Lisa Wang', 
+            department: 'HR',
+            type: 'Personal Leave', 
+            from: '2023-06-18', 
+            to: '2023-06-19', 
+            status: 'pending',
+            avatar: 'https://ui-avatars.com/api/?name=LW&background=1abc9c&color=fff'
+          },
+          { 
+            id: 3, 
+            employee: 'Emily Davis', 
+            department: 'Marketing',
+            type: 'Vacation', 
+            from: '2023-06-20', 
+            to: '2023-06-25', 
+            status: 'approved',
+            avatar: 'https://ui-avatars.com/api/?name=ED&background=e74c3c&color=fff'
+          }
+        ];
+        
+        setLeaveRequests(mockLeaveRequests);
+        setLoadingRequests(false);
+      } catch (error) {
+        console.error("Error fetching leave requests:", error);
+        setLoadingRequests(false);
+      }
+    };
+
+    fetchLeaveRequests();
+  }, []);
 
   // Mock data for dashboard statistics
   const stats = [
@@ -30,6 +125,62 @@ export default function Dashboard() {
   const handleNavigateToAttendance = () => navigate('/attendance');
   const handleNavigateToPayroll = () => navigate('/payroll');
   const handleNavigateToDepartments = () => navigate('/departments');
+  const handleNavigateToProfile = () => navigate('/profile');
+  const handleNavigateToLeaveRequests = () => navigate('/leave-requests');
+
+  // Function to render status badge
+  const renderStatusBadge = (status) => {
+    switch(status) {
+      case 'approved':
+        return <span className="status-badge approved"><FiCheckCircle /> Approved</span>;
+      case 'rejected':
+        return <span className="status-badge rejected"><FiXCircle /> Rejected</span>;
+      default:
+        return <span className="status-badge pending"><FiClock /> Pending</span>;
+    }
+  };
+
+  // Function to handle approving a leave request
+  const handleApproveRequest = async (id) => {
+    try {
+      // Would be replaced with actual API call
+      // await axios.put(`http://localhost:5000/api/leave-requests/${id}/approve`, {}, {
+      //   headers: {
+      //     Authorization: `Bearer ${localStorage.getItem("token")}`
+      //   }
+      // });
+      
+      // Update local state
+      setLeaveRequests(prev => 
+        prev.map(request => 
+          request.id === id ? {...request, status: 'approved'} : request
+        )
+      );
+    } catch (error) {
+      console.error("Error approving leave request:", error);
+    }
+  };
+
+  // Function to handle rejecting a leave request
+  const handleRejectRequest = async (id) => {
+    try {
+      // Would be replaced with actual API call
+      // await axios.put(`http://localhost:5000/api/leave-requests/${id}/reject`, {}, {
+      //   headers: {
+      //     Authorization: `Bearer ${localStorage.getItem("token")}`
+      //   }
+      // });
+      
+      // Update local state
+      setLeaveRequests(prev => 
+        prev.map(request => 
+          request.id === id ? {...request, status: 'rejected'} : request
+        )
+      );
+    } catch (error) {
+      console.error("Error rejecting leave request:", error);
+    }
+  };
 
   return (
     <div className="dashboard-page">
@@ -43,23 +194,143 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <section className="stats-section">
-        <div className="stats-grid">
-          {stats.map(stat => (
-            <div className="stat-card" key={stat.id}>
-              <div className="stat-icon" style={{ backgroundColor: stat.color }}>
-                {stat.icon}
-              </div>
-              <div className="stat-content">
-                <h3 className="stat-title">{stat.title}</h3>
-                <p className="stat-value">{stat.value}</p>
-              </div>
-            </div>
-          ))}
+      {/* Role Information Alert */}
+      {userRole !== 'admin' && (
+        <div className="role-info-alert">
+          <div className="alert-icon">
+            <FiInfo />
+          </div>
+          <div className="alert-content">
+            <h3>Welcome, {userRole === 'hr' ? 'HR Staff' : userRole === 'manager' ? 'Manager' : 'Employee'}</h3>
+            <p>
+              {userRole === 'hr' 
+                ? 'You have access to HR functions including employees, attendance, leave requests, payroll, and recruitment.' 
+                : userRole === 'manager' 
+                ? 'You have access to view employee information, attendance records, and user management.' 
+                : 'You can view and submit leave requests. Contact your HR department for any questions.'}
+            </p>
+          </div>
         </div>
-      </section>
+      )}
 
       <section className="dashboard-content">
+        {/* Profile Summary Card */}
+        <div className="dashboard-card profile-summary-card">
+          {loading ? (
+            <div className="profile-loading">Loading profile data...</div>
+          ) : user ? (
+            <>
+              <div className="profile-card-header">
+                <h2>My Profile</h2>
+                <div className="profile-completion">
+                  <div className="completion-bar">
+                    <div 
+                      className="completion-progress" 
+                      style={{ width: `${user.profileCompletion || 0}%` }}
+                    ></div>
+                  </div>
+                  <span>{user.profileCompletion || 0}% Complete</span>
+                </div>
+              </div>
+              <div className="profile-card-content">
+                <div className="profile-avatar">
+                  <img 
+                    src={user.avatar || `https://ui-avatars.com/api/?name=${user.name.replace(' ', '+')}&background=3498db&color=fff`} 
+                    alt={user.name} 
+                  />
+                </div>
+                <div className="profile-info">
+                  <h3>{user.name}</h3>
+                  <p className="profile-position">{user.position || 'Position not set'}</p>
+                  <p className="profile-department">{user.department || 'Department not set'}</p>
+                  
+                  {user.skills && user.skills.length > 0 && (
+                    <div className="profile-skills">
+                      {user.skills.slice(0, 3).map((skill, index) => (
+                        <span key={index} className="skill-tag">{skill}</span>
+                      ))}
+                      {user.skills.length > 3 && (
+                        <span className="skill-tag more">+{user.skills.length - 3}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                
+                <button 
+                  className="view-profile-btn"
+                  onClick={handleNavigateToProfile}
+                >
+                  <FiUser /> View Profile
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="profile-error">
+              <p>Could not load profile data. Please log in again.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Leave Requests Summary Card */}
+        <div className="dashboard-card leave-requests-card">
+          <div className="leave-requests-header">
+            <h2>Leave Requests</h2>
+            <button className="view-all-btn" onClick={handleNavigateToLeaveRequests}>
+              View All
+            </button>
+          </div>
+          
+          {loadingRequests ? (
+            <div className="loading-requests">Loading leave requests...</div>
+          ) : leaveRequests.length > 0 ? (
+            <ul className="leave-requests-list">
+              {leaveRequests.map(request => (
+                <li key={request.id} className="leave-request-item">
+                  <div className="request-header">
+                    <div className="employee-info">
+                      <img 
+                        src={request.avatar} 
+                        alt={request.employee} 
+                        className="employee-avatar"
+                      />
+                      <div>
+                        <h3 className="employee-name">{request.employee}</h3>
+                        <p className="employee-department">{request.department}</p>
+                      </div>
+                    </div>
+                    {renderStatusBadge(request.status)}
+                  </div>
+                  
+                  <div className="request-details">
+                    <div className="request-type">
+                      <span className="label">Type:</span>
+                      <span className="value">{request.type}</span>
+                    </div>
+                    <div className="request-dates">
+                      <span className="label">Dates:</span>
+                      <span className="value">{request.from} to {request.to}</span>
+                    </div>
+                  </div>
+                  
+                  {request.status === 'pending' && (
+                    <button 
+                      className="view-details-btn"
+                      onClick={() => handleNavigateToLeaveRequests()}
+                    >
+                      View Details
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="empty-requests">
+              <FiCalendar className="empty-icon" />
+              <p>No leave requests at the moment</p>
+            </div>
+          )}
+        </div>
+
         <div className="dashboard-card attendance-overview">
           <h2>Attendance Overview</h2>
           <div className="attendance-chart">
@@ -118,6 +389,83 @@ export default function Dashboard() {
             ))}
           </ul>
           <button className="view-all-btn">View All Activities</button>
+        </div>
+
+        {/* Recommended Connections */}
+        <div className="dashboard-card connections-card">
+          <div className="connections-header">
+            <h2>Recommended Connections</h2>
+            <button className="view-all">View All</button>
+          </div>
+          
+          <div className="connections-list">
+            <div className="connection-card">
+              <img 
+                src="https://ui-avatars.com/api/?name=JD&background=3498db&color=fff" 
+                alt="John Doe" 
+                className="connection-avatar"
+              />
+              <div className="connection-info">
+                <h3>John Doe</h3>
+                <p className="connection-position">UX Designer</p>
+                <p className="mutual-connections">3 mutual connections</p>
+              </div>
+              <button className="connect-btn">Connect</button>
+            </div>
+            
+            <div className="connection-card">
+              <img 
+                src="https://ui-avatars.com/api/?name=AS&background=9b59b6&color=fff" 
+                alt="Alice Smith" 
+                className="connection-avatar"
+              />
+              <div className="connection-info">
+                <h3>Alice Smith</h3>
+                <p className="connection-position">Product Manager</p>
+                <p className="mutual-connections">5 mutual connections</p>
+              </div>
+              <button className="connect-btn">Connect</button>
+            </div>
+            
+            <div className="connection-card">
+              <img 
+                src="https://ui-avatars.com/api/?name=RJ&background=e74c3c&color=fff" 
+                alt="Robert Johnson" 
+                className="connection-avatar"
+              />
+              <div className="connection-info">
+                <h3>Robert Johnson</h3>
+                <p className="connection-position">Backend Developer</p>
+                <p className="mutual-connections">2 mutual connections</p>
+              </div>
+              <button className="connect-btn">Connect</button>
+            </div>
+          </div>
+          
+          {/* Empty state - will be shown conditionally in a real app */}
+          <div className="empty-connections" style={{ display: 'none' }}>
+            <div className="empty-icon">
+              <FiUsers />
+            </div>
+            <h3 className="empty-title">No recommendations yet</h3>
+            <p className="empty-message">We'll suggest connections as you grow your network</p>
+          </div>
+        </div>
+      </section>
+      
+      <section className="stats-section">
+        <div className="stats-grid">
+          {stats.map(stat => (
+            <div className="stat-card" key={stat.id}>
+              <div className="stat-icon" style={{ backgroundColor: stat.color }}>
+                {stat.icon}
+              </div>
+              <div className="stat-content">
+                <h3 className="stat-title">{stat.title}</h3>
+                <p className="stat-value">{stat.value}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
       

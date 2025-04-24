@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   FiSearch, 
   FiFilter, 
@@ -10,20 +10,24 @@ import {
   FiEye,
   FiSave
 } from "react-icons/fi";
+import { useAuth } from "../context/AuthContext";
 import "./LeaveRequests.scss";
 
 export default function LeaveRequests() {
+  const { userRole, currentUser, hasPermission } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
   const [showRequestDetails, setShowRequestDetails] = useState(null);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // New request form data
   const [newRequest, setNewRequest] = useState({
-    employeeId: "",
-    employeeName: "",
-    department: "",
+    employeeId: currentUser?.employeeId || "",
+    employeeName: currentUser?.name || "",
+    department: currentUser?.department || "",
     type: "Annual Leave",
     startDate: "",
     endDate: "",
@@ -33,104 +37,87 @@ export default function LeaveRequests() {
   // Form validation errors
   const [formErrors, setFormErrors] = useState({});
   
-  // Mock leave request data
-  const [leaveRequests, setLeaveRequests] = useState([
-    { 
-      id: 1, 
-      employeeId: "EMP001", 
-      employeeName: "Ali Ben Salah", 
-      department: "IT",
-      type: "Annual Leave", 
-      startDate: "2023-06-15", 
-      endDate: "2023-06-20", 
-      duration: "6 days", 
-      reason: "Family vacation",
-      status: "approved", 
-      submitDate: "2023-05-28",
-      approver: "Michael Brown",
-      approvedDate: "2023-06-01" 
-    },
-    { 
-      id: 2, 
-      employeeId: "EMP002", 
-      employeeName: "Sarah Johnson", 
-      department: "Human Resources",
-      type: "Sick Leave", 
-      startDate: "2023-06-10", 
-      endDate: "2023-06-12", 
-      duration: "3 days", 
-      reason: "Medical appointment and recovery",
-      status: "approved", 
-      submitDate: "2023-06-05",
-      approver: "David Wilson",
-      approvedDate: "2023-06-07" 
-    },
-    { 
-      id: 3, 
-      employeeId: "EMP003", 
-      employeeName: "Michael Brown", 
-      department: "Management",
-      type: "Personal Leave", 
-      startDate: "2023-06-25", 
-      endDate: "2023-06-27", 
-      duration: "3 days", 
-      reason: "Personal matters",
-      status: "pending", 
-      submitDate: "2023-06-10" 
-    },
-    { 
-      id: 4, 
-      employeeId: "EMP004", 
-      employeeName: "Emily Davis", 
-      department: "Marketing",
-      type: "Maternity Leave", 
-      startDate: "2023-07-15", 
-      endDate: "2023-10-15", 
-      duration: "3 months", 
-      reason: "Maternity leave",
-      status: "pending", 
-      submitDate: "2023-06-01" 
-    },
-    { 
-      id: 5, 
-      employeeId: "EMP005", 
-      employeeName: "David Wilson", 
-      department: "Finance",
-      type: "Annual Leave", 
-      startDate: "2023-06-18", 
-      endDate: "2023-06-24", 
-      duration: "7 days", 
-      reason: "Summer vacation",
-      status: "rejected", 
-      submitDate: "2023-06-02",
-      approver: "Michael Brown",
-      approvedDate: "2023-06-05",
-      rejectionReason: "Critical project deadline during the requested period" 
+  // Initialize leave requests from localStorage if available
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  useEffect(() => {
+    const savedRequests = localStorage.getItem('leaveRequests');
+    if (savedRequests) {
+      setLeaveRequests(JSON.parse(savedRequests));
     }
-  ]);
+  }, []);
 
-  // Filter leave requests based on search and status filter
+  // Save leave requests to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('leaveRequests', JSON.stringify(leaveRequests));
+  }, [leaveRequests]);
+
+  // Initialize form data with current user info when available
+  useEffect(() => {
+    if (currentUser) {
+      setNewRequest(prev => ({
+        ...prev,
+        employeeId: currentUser.employeeId || "",
+        employeeName: currentUser.name || "",
+        department: currentUser.department || ""
+      }));
+    }
+  }, [currentUser]);
+
+  // Filter leave requests based on search, status filter, and user role
   const filteredRequests = leaveRequests.filter(request => {
+    // Debug logging for filtering
+    console.log('Filtering request:', {
+      requestEmployeeId: request.employeeId,
+      currentUserId: currentUser?._id,
+      userRole: userRole,
+      hasPermission: hasPermission(['admin', 'hr', 'manager'])
+    });
+
+    // Role-based filtering:
+    // - If user is admin, HR, or manager: show all requests
+    // - If user is a regular employee: only show their own requests
+    if (!hasPermission(['admin', 'hr', 'manager'])) {
+      // Regular employee - only show their own requests
+      if (!currentUser?._id) {
+        console.log('No user ID found for current user');
+        return false;
+      }
+      // Convert both IDs to strings and compare
+      const requestId = String(request.employeeId).trim();
+      const currentUserId = String(currentUser._id).trim();
+      console.log('Comparing IDs:', { requestId, currentUserId });
+      
+      if (requestId !== currentUserId) {
+        console.log('IDs do not match');
+        return false;
+      }
+      console.log('IDs match, showing request');
+    }
+    
+    // Apply search filter
     const matchesSearch = 
       request.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.department.toLowerCase().includes(searchTerm.toLowerCase());
     
+    // Apply status filter
     const matchesFilter = 
       filterStatus === "all" || request.status === filterStatus;
     
     return matchesSearch && matchesFilter;
   });
 
-  // Function to handle status changes
+  // Function to handle status changes - only for HR/admin/manager
   const handleStatusChange = (id, newStatus, rejectionReason = null) => {
+    if (!hasPermission(['admin', 'hr', 'manager'])) return;
+    
     setLeaveRequests(prevRequests =>
       prevRequests.map(request =>
         request.id === id
           ? {
               ...request,
               status: newStatus,
-              approver: "Admin",
+              approver: currentUser?.name || "Admin",
               approvedDate: new Date().toISOString().split('T')[0],
               ...(rejectionReason && { rejectionReason })
             }
@@ -179,16 +166,20 @@ export default function LeaveRequests() {
   const validateForm = () => {
     const errors = {};
     
-    if (!newRequest.employeeName.trim()) {
-      errors.employeeName = "Employee name is required";
-    }
-    
-    if (!newRequest.employeeId.trim()) {
-      errors.employeeId = "Employee ID is required";
-    }
-    
-    if (!newRequest.department.trim()) {
-      errors.department = "Department is required";
+    // Only validate employee info fields if user is admin or HR
+    // Regular employees use their own info automatically
+    if (hasPermission(['admin', 'hr'])) {
+      if (!newRequest.employeeName.trim()) {
+        errors.employeeName = "Employee name is required";
+      }
+      
+      if (!newRequest.employeeId.trim()) {
+        errors.employeeId = "Employee ID is required";
+      }
+      
+      if (!newRequest.department.trim()) {
+        errors.department = "Department is required";
+      }
     }
     
     if (!newRequest.type.trim()) {
@@ -220,18 +211,39 @@ export default function LeaveRequests() {
     e.preventDefault();
     
     if (validateForm()) {
+      setIsSubmitting(true);
+      
       // Calculate duration
       const start = new Date(newRequest.startDate);
       const end = new Date(newRequest.endDate);
       const diffTime = Math.abs(end - start);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
       
-      // Create new request object
+      // For regular employees, use current user info or generate defaults if missing
+      let employeeId = newRequest.employeeId;
+      let employeeName = newRequest.employeeName;
+      let department = newRequest.department;
+      
+      if (!hasPermission(['admin', 'hr'])) {
+        // Use the user's _id as employeeId
+        employeeId = String(currentUser?._id).trim();
+        employeeName = currentUser?.name || "Employee";
+        department = currentUser?.department || "General";
+        
+        console.log('Setting employee info for new request:', {
+          employeeId,
+          employeeName,
+          department,
+          currentUser
+        });
+      }
+      
+      // Create new request object with the current user's info
       const newLeaveRequest = {
-        id: leaveRequests.length + 1,
-        employeeId: newRequest.employeeId,
-        employeeName: newRequest.employeeName,
-        department: newRequest.department,
+        id: Date.now(), // Use timestamp as ID to ensure uniqueness
+        employeeId: employeeId,
+        employeeName: employeeName,
+        department: department,
         type: newRequest.type,
         startDate: newRequest.startDate,
         endDate: newRequest.endDate,
@@ -241,49 +253,136 @@ export default function LeaveRequests() {
         submitDate: new Date().toISOString().split('T')[0]
       };
       
-      // Add to requests
-      setLeaveRequests([...leaveRequests, newLeaveRequest]);
+      console.log('Submitting new request:', newLeaveRequest);
+      
+      // Add to requests and ensure it's immediately visible
+      setLeaveRequests(prevRequests => {
+        const updatedRequests = [...prevRequests, newLeaveRequest];
+        // Save to localStorage immediately
+        localStorage.setItem('leaveRequests', JSON.stringify(updatedRequests));
+        console.log('Updated requests:', updatedRequests);
+        return updatedRequests;
+      });
+      
+      // Set filter to "all" to ensure the new request is visible
+      setFilterStatus("all");
+      setSearchTerm(""); // Clear search to ensure the new request is visible
+      
+      // Show success message
+      setSuccessMessage(`Leave request for ${newRequest.type} has been submitted successfully`);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 5000);
       
       // Reset form and close modal
       setNewRequest({
-        employeeId: "",
-        employeeName: "",
-        department: "",
+        employeeId: currentUser?._id || "",
+        employeeName: currentUser?.name || "",
+        department: currentUser?.department || "",
         type: "Annual Leave",
         startDate: "",
         endDate: "",
         reason: "",
       });
+      setIsSubmitting(false);
       setIsNewRequestOpen(false);
+      
+      // Scroll to the leave table
+      setTimeout(() => {
+        const tableElement = document.querySelector('.leave-table');
+        if (tableElement) {
+          tableElement.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
     }
   };
+
+  // Add a function to get all requests for the current user
+  const getUserRequests = () => {
+    if (!currentUser?.employeeId) return [];
+    return leaveRequests.filter(request => 
+      String(request.employeeId) === String(currentUser.employeeId)
+    );
+  };
+
+  // Add a summary of the user's requests
+  const userRequests = getUserRequests();
+  const pendingCount = userRequests.filter(r => r.status === "pending").length;
+  const approvedCount = userRequests.filter(r => r.status === "approved").length;
+  const rejectedCount = userRequests.filter(r => r.status === "rejected").length;
+
+  // Add debug logging
+  useEffect(() => {
+    console.log('Current User:', currentUser);
+    console.log('Leave Requests:', leaveRequests);
+    console.log('Filtered Requests:', filteredRequests);
+  }, [currentUser, leaveRequests, filteredRequests]);
 
   return (
     <div className="leave-requests-page">
       <header className="page-header">
-        <h1>Leave Requests</h1>
-        <div className="leave-summary">
-          <div className="summary-item">
-            <h3>Pending</h3>
-            <p>{leaveRequests.filter(r => r.status === "pending").length}</p>
+        {hasPermission(['admin', 'hr', 'manager']) ? (
+          <h1>Leave Requests</h1>
+        ) : (
+          <h1>My Leave Requests</h1>
+        )}
+        
+        {/* Leave summary counter - only for HR/admin/manager */}
+        {hasPermission(['admin', 'hr', 'manager']) && (
+          <div className="leave-summary">
+            <div className="summary-item">
+              <h3>Pending</h3>
+              <p>{leaveRequests.filter(r => r.status === "pending").length}</p>
+            </div>
+            <div className="summary-item">
+              <h3>Approved</h3>
+              <p>{leaveRequests.filter(r => r.status === "approved").length}</p>
+            </div>
+            <div className="summary-item">
+              <h3>Rejected</h3>
+              <p>{leaveRequests.filter(r => r.status === "rejected").length}</p>
+            </div>
           </div>
-          <div className="summary-item">
-            <h3>Approved</h3>
-            <p>{leaveRequests.filter(r => r.status === "approved").length}</p>
+        )}
+
+        {/* Display a summary for regular employees */}
+        {!hasPermission(['admin', 'hr', 'manager']) && (
+          <div className="my-leave-summary">
+            <div className="summary-item">
+              <h3>Pending</h3>
+              <p>{pendingCount}</p>
+            </div>
+            <div className="summary-item">
+              <h3>Approved</h3>
+              <p>{approvedCount}</p>
+            </div>
+            <div className="summary-item">
+              <h3>Rejected</h3>
+              <p>{rejectedCount}</p>
+            </div>
           </div>
-          <div className="summary-item">
-            <h3>Rejected</h3>
-            <p>{leaveRequests.filter(r => r.status === "rejected").length}</p>
-          </div>
-        </div>
+        )}
       </header>
+
+      {successMessage && (
+        <div className="success-message">
+          <FiCheck className="success-icon" />
+          <p>{successMessage}</p>
+        </div>
+      )}
 
       <div className="actions-bar">
         <div className="search-container">
           <FiSearch />
           <input
             type="text"
-            placeholder="Search employee, leave type..."
+            placeholder={
+              hasPermission(['admin', 'hr', 'manager']) 
+                ? "Search employee, leave type..." 
+                : "Search by leave type..."
+            }
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -337,7 +436,7 @@ export default function LeaveRequests() {
         <table>
           <thead>
             <tr>
-              <th>Employee</th>
+              {hasPermission(['admin', 'hr', 'manager']) && <th>Employee</th>}
               <th>Department</th>
               <th>Type</th>
               <th>Duration</th>
@@ -347,61 +446,69 @@ export default function LeaveRequests() {
             </tr>
           </thead>
           <tbody>
-            {filteredRequests.map((request) => {
-              const statusInfo = getStatusInfo(request.status);
-              
-              return (
-                <tr key={request.id}>
-                  <td>{request.employeeName}</td>
-                  <td>{request.department}</td>
-                  <td>{request.type}</td>
-                  <td>{request.duration}</td>
-                  <td>
-                    <div className="date-range">
-                      <FiCalendar className="icon" />
-                      <span>{formatDate(request.startDate)} - {formatDate(request.endDate)}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="status-cell">
-                      <span 
-                        className="status-badge" 
-                        style={{ backgroundColor: statusInfo.color }}
-                      >
-                        {statusInfo.icon}
-                      </span>
-                      <span className="status-text">{request.status}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="request-actions">
-                      <button className="view-button" onClick={() => setShowRequestDetails(request)}>
-                        <FiEye />
-                      </button>
-                      {request.status === "pending" && (
-                        <>
-                          <button 
-                            className="approve-button" 
-                            onClick={() => handleStatusChange(request.id, "approved")}
-                          >
-                            <FiCheck />
-                          </button>
-                          <button 
-                            className="reject-button" 
-                            onClick={() => {
-                              const reason = window.prompt("Reason for rejection:");
-                              if (reason) handleStatusChange(request.id, "rejected", reason);
-                            }}
-                          >
-                            <FiX />
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {filteredRequests.length > 0 ? (
+              filteredRequests.map((request) => {
+                const statusInfo = getStatusInfo(request.status);
+                
+                return (
+                  <tr key={request.id}>
+                    {hasPermission(['admin', 'hr', 'manager']) && <td>{request.employeeName}</td>}
+                    <td>{request.department}</td>
+                    <td>{request.type}</td>
+                    <td>{request.duration}</td>
+                    <td>
+                      <div className="date-range">
+                        <FiCalendar className="icon" />
+                        <span>{formatDate(request.startDate)} - {formatDate(request.endDate)}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="status-cell">
+                        <span 
+                          className="status-badge" 
+                          style={{ backgroundColor: statusInfo.color }}
+                        >
+                          {statusInfo.icon}
+                        </span>
+                        <span className="status-text">{request.status}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="request-actions">
+                        <button className="view-button" onClick={() => setShowRequestDetails(request)}>
+                          <FiEye />
+                        </button>
+                        {request.status === "pending" && hasPermission(['admin', 'hr', 'manager']) && (
+                          <>
+                            <button 
+                              className="approve-button" 
+                              onClick={() => handleStatusChange(request.id, "approved")}
+                            >
+                              <FiCheck />
+                            </button>
+                            <button 
+                              className="reject-button" 
+                              onClick={() => {
+                                const reason = window.prompt("Reason for rejection:");
+                                if (reason) handleStatusChange(request.id, "rejected", reason);
+                              }}
+                            >
+                              <FiX />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={hasPermission(['admin', 'hr', 'manager']) ? 7 : 6} className="no-requests">
+                  No leave requests found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -418,50 +525,66 @@ export default function LeaveRequests() {
             </div>
             <form onSubmit={handleSubmitRequest}>
               <div className="modal-body">
-                <div className="form-group">
-                  <label htmlFor="employeeName">Employee Name</label>
-                  <input
-                    type="text"
-                    id="employeeName"
-                    name="employeeName"
-                    value={newRequest.employeeName}
-                    onChange={handleInputChange}
-                    className={formErrors.employeeName ? "error" : ""}
-                  />
-                  {formErrors.employeeName && <div className="error-message">{formErrors.employeeName}</div>}
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="employeeId">Employee ID</label>
-                  <input
-                    type="text"
-                    id="employeeId"
-                    name="employeeId"
-                    value={newRequest.employeeId}
-                    onChange={handleInputChange}
-                    className={formErrors.employeeId ? "error" : ""}
-                  />
-                  {formErrors.employeeId && <div className="error-message">{formErrors.employeeId}</div>}
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="department">Department</label>
-                  <select
-                    id="department"
-                    name="department"
-                    value={newRequest.department}
-                    onChange={handleInputChange}
-                    className={formErrors.department ? "error" : ""}
-                  >
-                    <option value="">Select Department</option>
-                    <option value="IT">IT</option>
-                    <option value="Human Resources">Human Resources</option>
-                    <option value="Management">Management</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Finance">Finance</option>
-                  </select>
-                  {formErrors.department && <div className="error-message">{formErrors.department}</div>}
-                </div>
+                {/* For admins and HR, show editable employee fields */}
+                {hasPermission(['admin', 'hr']) ? (
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="employeeName">Employee Name</label>
+                      <input
+                        type="text"
+                        id="employeeName"
+                        name="employeeName"
+                        value={newRequest.employeeName}
+                        onChange={handleInputChange}
+                        className={formErrors.employeeName ? "error" : ""}
+                      />
+                      {formErrors.employeeName && <div className="error-message">{formErrors.employeeName}</div>}
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="employeeId">Employee ID</label>
+                      <input
+                        type="text"
+                        id="employeeId"
+                        name="employeeId"
+                        value={newRequest.employeeId}
+                        onChange={handleInputChange}
+                        className={formErrors.employeeId ? "error" : ""}
+                      />
+                      {formErrors.employeeId && <div className="error-message">{formErrors.employeeId}</div>}
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="department">Department</label>
+                      <select
+                        id="department"
+                        name="department"
+                        value={newRequest.department}
+                        onChange={handleInputChange}
+                        className={formErrors.department ? "error" : ""}
+                      >
+                        <option value="">Select Department</option>
+                        <option value="IT">IT</option>
+                        <option value="Human Resources">Human Resources</option>
+                        <option value="Management">Management</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Finance">Finance</option>
+                        <option value="General">General</option>
+                      </select>
+                      {formErrors.department && <div className="error-message">{formErrors.department}</div>}
+                    </div>
+                  </>
+                ) : (
+                  // For regular employees, show a simple summary of their info
+                  <div className="employee-info-summary">
+                    <p>You are submitting this request as:</p>
+                    <div className="info-box">
+                      <strong>{currentUser?.name || "Employee"}</strong>
+                      <span>ID: {currentUser?.employeeId || "Not assigned"}</span>
+                      <span>Department: {currentUser?.department || "General"}</span>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="form-group">
                   <label htmlFor="type">Leave Type</label>
@@ -525,12 +648,21 @@ export default function LeaveRequests() {
               </div>
               
               <div className="modal-footer">
-                <button type="button" className="cancel-btn" onClick={() => setIsNewRequestOpen(false)}>
+                <button type="button" className="cancel-btn" onClick={() => setIsNewRequestOpen(false)} disabled={isSubmitting}>
                   Cancel
                 </button>
-                <button type="submit" className="submit-btn">
-                  <FiSave />
-                  Submit Request
+                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner"></span>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <FiSave />
+                      Submit Request
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -610,7 +742,7 @@ export default function LeaveRequests() {
               )}
             </div>
             
-            {showRequestDetails.status === "pending" && (
+            {showRequestDetails.status === "pending" && hasPermission(['admin', 'hr', 'manager']) && (
               <div className="modal-footer">
                 <button 
                   className="approve-btn" 

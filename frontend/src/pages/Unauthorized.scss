@@ -1,0 +1,120 @@
+.unauthorized-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f9fafb;
+
+  .error-container {
+    max-width: 500px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 3rem 2rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    .error-icon {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 80px;
+      height: 80px;
+      background-color: rgba(239, 68, 68, 0.1);
+      border-radius: 50%;
+      margin: 0 auto 1.5rem;
+
+      svg {
+        color: #ef4444;
+        font-size: 2.5rem;
+      }
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin: 0 0 1rem;
+    }
+
+    p {
+      color: #6b7280;
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+
+      a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        min-width: 150px;
+
+        &.home-button {
+          background-color: #3b82f6;
+          color: #ffffff;
+
+          &:hover {
+            background-color: #2563eb;
+          }
+        }
+
+        &.dashboard-button {
+          background-color: #f3f4f6;
+          color: #4b5563;
+          border: 1px solid #e5e7eb;
+
+          &:hover {
+            background-color: #e5e7eb;
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .error-container {
+      padding: 2rem 1.5rem;
+
+      .error-icon {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1.25rem;
+
+        svg {
+          font-size: 2rem;
+        }
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      p {
+        font-size: 0.95rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        gap: 0.75rem;
+
+        a {
+          width: 100%;
+        }
+      }
+    }
+  }
+} 

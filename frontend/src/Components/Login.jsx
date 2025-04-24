@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import {jwtDecode} from "jwt-decode"
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
+import { useAuth } from "../context/AuthContext";
 import "../styles/login.css";
 
 const Login = () => {
@@ -8,8 +9,20 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { login } = useAuth();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if we have a redirect destination after login
+  const from = location.state?.from || '/dashboard';
+  const jobInfo = location.state?.jobInfo;
+
+  // For debugging
+  useEffect(() => {
+    console.log("Redirect destination:", from);
+    console.log("Job info:", jobInfo);
+  }, [from, jobInfo]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,25 +30,18 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.message || "Login failed. Please try again.");
-        return;
-      }
-      const token = data.token;
-      localStorage.setItem('token', token)
+      // Use the login function from AuthContext
+      await login(email, password);
       
-      // Redirect all users to dashboard regardless of role
-      navigate('/dashboard');
+      // Handle redirect based on the from path
+      if (from === '/jobApplication' && jobInfo) {
+        navigate('/jobApplication', { state: jobInfo });
+      } else {
+        navigate(from);
+      }
     } catch (error) {
       console.error("Error logging in:", error);
-      setError("Network error. Please check your connection and try again.");
+      setError(error.response?.data?.message || "Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }
