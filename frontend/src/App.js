@@ -21,6 +21,10 @@ import RouteGuard from "./Components/RouteGuard";
 import { AuthProvider } from "./context/AuthContext";
 import ThemeContext from "./context/ThemeContext";
 import "./styles/auth-loading.scss";
+import CreateJob from './Components/features/CreateJob';
+import ManageJobs from './Components/admin/ManageJobs';
+import Recruitment from './Components/Recruitment';
+import ThankYouPage from './Components/features/ThankYouPage';
 
 function App() {
   const { theme } = useContext(ThemeContext);
@@ -42,39 +46,46 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/features/job-offers" element={<JobOffers />} />
+          <Route path="/features/job-application" element={<JobApplicationForm />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
           {/* Protected Routes - all authenticated users */}
-          <Route element={<RouteGuard />}>
-            <Route path="/jobApplication" element={<JobApplicationForm />} />
+          <Route element={<Layout />}>
+            {/* Common routes - accessible by all authenticated users */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/leave-requests" element={<LeaveRequests />} />
             <Route path="/profile" element={<UserProfile />} />
-            <Route element={<Layout />}>
-              {/* Common routes - accessible by all authenticated users */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/leave-requests" element={<LeaveRequests />} />
-              
-              {/* HR, Manager, and Admin routes */}
-              <Route element={<RouteGuard requiredRoles={['admin', 'hr', 'manager']} />}>
-                <Route path="/employees" element={<Employees />} />
-                <Route path="/attendance" element={<Attendance />} />
-              </Route>
-              
-              {/* HR and Admin only routes */}
-              <Route element={<RouteGuard requiredRoles={['admin', 'hr']} />}>
-                <Route path="/departments" element={<Departments />} />
-                <Route path="/payroll" element={<Payroll />} />
-                <Route path="/recruitment" element={<JobOffers />} />
-              </Route>
-              
-              {/* Admin and Manager only routes */}
-              <Route element={<RouteGuard requiredRoles={['admin', 'manager']} />}>
-                <Route path="/usermanager" element={<UserManager />} />
-              </Route>
+            <Route path="/create-job" element={<CreateJob />} />
+            
+            {/* HR, Manager, and Admin routes */}
+            <Route element={<RouteGuard requiredRoles={['admin', 'hr', 'manager']} />}>
+              <Route path="/employees" element={<Employees />} />
+              <Route path="/attendance" element={<Attendance />} />
+            </Route>
+            
+            {/* HR and Admin only routes */}
+            <Route element={<RouteGuard requiredRoles={['admin', 'hr']} />}>
+              <Route path="/departments" element={<Departments />} />
+              <Route path="/payroll" element={<Payroll />} />
+            </Route>
+            
+            {/* HR, Admin, and Manager routes */}
+            <Route element={<RouteGuard requiredRoles={['admin', 'hr', 'manager']} />}>
+              <Route path="/recruitment" element={<Recruitment />} />
+              <Route path="/manage-jobs" element={<ManageJobs />} />
+            </Route>
+            
+            {/* Admin and Manager only routes */}
+            <Route element={<RouteGuard requiredRoles={['admin', 'manager']} />}>
+              <Route path="/usermanager" element={<UserManager />} />
             </Route>
           </Route>
           
           {/* Global catch-all - redirect to login page */}
           <Route path="*" element={<Navigate to="/login" replace />} />
+
+          {/* Additional route for ThankYouPage */}
+          <Route path="/thank-you" element={<ThankYouPage />} />
         </Routes>
       </Router>
     </AuthProvider>

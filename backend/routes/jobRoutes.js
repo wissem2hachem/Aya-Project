@@ -1,9 +1,10 @@
 const express = require("express");
 const Job = require("../models/Job");
+const { authenticate } = require("../middleware/authMiddleware");
 const router = express.Router();
 
 // Get All Jobs (READ)
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
     const jobs = await Job.find().populate('postedBy', 'name email');
     res.status(200).json(jobs);
@@ -13,7 +14,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get Single Job by ID (READ)
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   try {
     const job = await Job.findById(req.params.id).populate('postedBy', 'name email');
     if (!job) {
@@ -26,7 +27,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // Create New Job (CREATE)
-router.post("/create", async (req, res) => {
+router.post("/create", authenticate, async (req, res) => {
   try {
     const { 
       title, 
@@ -35,8 +36,7 @@ router.post("/create", async (req, res) => {
       location, 
       employmentType, 
       salaryRange,
-      status,
-      postedBy 
+      status
     } = req.body;
     
     const newJob = new Job({
@@ -47,7 +47,7 @@ router.post("/create", async (req, res) => {
       employmentType,
       salaryRange,
       status,
-      postedBy
+      postedBy: req.user._id // Add the user who created the job
     });
 
     const savedJob = await newJob.save();
@@ -58,7 +58,7 @@ router.post("/create", async (req, res) => {
 });
 
 // Update Job (UPDATE)
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, async (req, res) => {
   try {
     const { 
       title, 
@@ -95,7 +95,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Delete Job (DELETE)
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticate, async (req, res) => {
   try {
     const deletedJob = await Job.findByIdAndDelete(req.params.id);
     

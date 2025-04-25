@@ -5,10 +5,20 @@ const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const app = express();
 const userRoutes = require("./routes/userRoutes")
+const jobRoutes = require("./routes/jobRoutes");
+const leaveRequestRoutes = require("./routes/leaveRequestRoutes");
 const path = require("path");
+const fs = require("fs-extra");
 
-
-
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+const cvsDir = path.join(uploadsDir, 'cvs');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
+}
+if (!fs.existsSync(cvsDir)) {
+  fs.mkdirSync(cvsDir);
+}
 
 // middleware
 app.use(express.json());
@@ -26,6 +36,9 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/certificates", require("./routes/certificateRoutes"));
+app.use("/api/job-applications", require("./routes/jobApplicationRoutes"));
+app.use("/api/jobs", jobRoutes);
+app.use("/api/leave-requests", leaveRequestRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

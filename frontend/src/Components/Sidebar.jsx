@@ -5,6 +5,7 @@ import {
   MdPeople,
   MdEventNote,
   MdOutlineAttachMoney,
+  MdWork,
 } from "react-icons/md";
 import { AiFillSetting } from "react-icons/ai";
 import { FaUserTie, FaUserCheck } from "react-icons/fa";
@@ -92,7 +93,14 @@ export default function Sidebar({ isOpen, onClose }) {
       icon: FaUserTie,
       path: "/recruitment",
       ariaLabel: "Navigate to Recruitment",
-      requiredRoles: ['admin', 'hr'],
+      requiredRoles: ['admin', 'hr', 'manager'],
+    },
+    {
+      title: "Manage Jobs",
+      icon: MdWork,
+      path: "/manage-jobs",
+      ariaLabel: "Navigate to Manage Jobs",
+      requiredRoles: ['admin', 'hr', 'manager'],
     },
     {
       title: "User Manager",

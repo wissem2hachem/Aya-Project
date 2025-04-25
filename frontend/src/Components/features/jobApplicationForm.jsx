@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../../styles/jobApplicationForm.scss';
+import axios from 'axios';
 
 const JobApplicationForm = () => {
   const navigate = useNavigate();
@@ -8,15 +9,11 @@ const JobApplicationForm = () => {
   const jobId = location.state?.jobId;
   const jobTitle = location.state?.jobTitle;
 
-  // Check authentication on component mount
+  // Check job information on component mount
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    console.log("Token in JobApplicationForm:", token);
-    
-    // Always redirect to login if accessed directly
-    if (!jobId || !jobTitle || !token) {
-      console.log("Missing job info or token, redirecting to login");
-      navigate('/login');
+    if (!jobId || !jobTitle) {
+      console.log("Missing job info, redirecting to job offers");
+      navigate('/features/job-offers');
       return;
     }
   }, [navigate, jobId, jobTitle]);
@@ -41,13 +38,31 @@ const JobApplicationForm = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setFormData(prev => ({
-        ...prev,
-        cv: file
-      }));
-    } else {
-      alert('Please upload a PDF file');
+    if (file) {
+      if (file.type === 'application/pdf') {
+        if (file.size <= 5 * 1024 * 1024) { // 5MB limit
+          setFormData(prev => ({
+            ...prev,
+            cv: file
+          }));
+          setErrors(prev => ({
+            ...prev,
+            cv: null
+          }));
+        } else {
+          setErrors(prev => ({
+            ...prev,
+            cv: 'File size must be less than 5MB'
+          }));
+          e.target.value = null; // Clear the file input
+        }
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          cv: 'Please upload a PDF file'
+        }));
+        e.target.value = null; // Clear the file input
+      }
     }
   };
 
@@ -72,6 +87,12 @@ const JobApplicationForm = () => {
     
     if (validateForm()) {
       try {
+        console.log("Submitting application with data:", {
+          ...formData,
+          jobId,
+          jobTitle
+        });
+
         const formDataToSend = new FormData();
         formDataToSend.append('firstName', formData.firstName);
         formDataToSend.append('lastName', formData.lastName);
@@ -80,20 +101,21 @@ const JobApplicationForm = () => {
         formDataToSend.append('cv', formData.cv);
         formDataToSend.append('jobId', jobId);
 
-        const response = await fetch('http://localhost:5000/api/jobs/apply', {
-          method: 'POST',
-          body: formDataToSend,
+        console.log("Sending request to /api/job-applications/apply");
+        const response = await axios.post('http://localhost:5000/api/job-applications/apply', formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         });
 
-        if (response.ok) {
-          alert('Application submitted successfully!');
-          navigate('/job-offers');
-        } else {
-          alert('Failed to submit application. Please try again.');
+        console.log("Response received:", response.data);
+        if (response.status === 201) {
+          navigate('/thank-you', { state: { jobTitle: jobTitle } });
         }
       } catch (error) {
         console.error('Error submitting application:', error);
-        alert('An error occurred. Please try again.');
+        console.error('Error response:', error.response?.data);
+        alert(error.response?.data?.message || 'An error occurred while submitting the application. Please try again.');
       }
     }
   };

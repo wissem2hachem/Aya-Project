@@ -1,0 +1,99 @@
+.create-job-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+  }
+}
+
+.create-job-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    label {
+      font-weight: 600;
+      color: #444;
+    }
+
+    input, select, textarea {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+
+      &:focus {
+        outline: none;
+        border-color: #4a90e2;
+      }
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+  }
+
+  .salary-range {
+    .salary-inputs {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      input {
+        flex: 1;
+      }
+
+      span {
+        color: #666;
+      }
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 4px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s;
+
+      &.submit-button {
+        background-color: #4a90e2;
+        color: white;
+
+        &:hover {
+          background-color: #357abd;
+        }
+      }
+
+      &.cancel-button {
+        background-color: #f5f5f5;
+        color: #666;
+
+        &:hover {
+          background-color: #e0e0e0;
+        }
+      }
+    }
+  }
+} 

@@ -1,0 +1,228 @@
+.recruitment-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .recruitment-header {
+    margin-bottom: 2rem;
+    
+    h1 {
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .recruitment-filters {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+
+      .search-box, .filter-box {
+        position: relative;
+        display: flex;
+        align-items: center;
+        
+        .search-icon, .filter-icon {
+          position: absolute;
+          left: 1rem;
+          color: var(--text-secondary);
+        }
+
+        input, select {
+          padding: 0.75rem 1rem 0.75rem 2.5rem;
+          border: 1px solid var(--border-color);
+          border-radius: 0.5rem;
+          background: var(--bg-secondary);
+          color: var(--text-primary);
+          width: 250px;
+          
+          &:focus {
+            outline: none;
+            border-color: var(--primary-color);
+          }
+        }
+      }
+    }
+  }
+
+  .applications-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .application-card {
+    background: var(--bg-secondary);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+
+    &:hover {
+      transform: translateY(-2px);
+    }
+
+    .candidate-info {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+
+      .candidate-avatar {
+        width: 50px;
+        height: 50px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+      }
+
+      .candidate-details {
+        h3 {
+          margin: 0;
+          color: var(--text-primary);
+        }
+
+        .position {
+          color: var(--primary-color);
+          margin: 0.25rem 0;
+        }
+
+        .contact {
+          color: var(--text-secondary);
+          margin: 0.25rem 0;
+          font-size: 0.9rem;
+        }
+      }
+    }
+
+    .application-details {
+      .status-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        .status-badge {
+          padding: 0.25rem 0.75rem;
+          border-radius: 1rem;
+          font-size: 0.8rem;
+          font-weight: 500;
+
+          &.pending {
+            background: #fff3cd;
+            color: #856404;
+          }
+
+          &.reviewed {
+            background: #cce5ff;
+            color: #004085;
+          }
+
+          &.shortlisted {
+            background: #d4edda;
+            color: #155724;
+          }
+
+          &.rejected {
+            background: #f8d7da;
+            color: #721c24;
+          }
+        }
+
+        .date {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+        }
+      }
+
+      .cover-letter {
+        margin-bottom: 1.5rem;
+
+        h4 {
+          margin: 0 0 0.5rem 0;
+          color: var(--text-primary);
+        }
+
+        p {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          line-height: 1.5;
+        }
+      }
+
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .download-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: var(--primary-color);
+          color: white;
+          border: none;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          transition: background 0.2s;
+
+          &:hover {
+            background: var(--primary-color-dark);
+          }
+        }
+
+        .status-actions {
+          display: flex;
+          gap: 0.5rem;
+          align-items: center;
+
+          select {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: border-color 0.2s;
+
+            &:focus {
+              outline: none;
+              border-color: var(--primary-color);
+            }
+          }
+
+          .delete-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            background: #f8d7da;
+            color: #721c24;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+              background: #f5c6cb;
+              color: #721c24;
+            }
+
+            &:active {
+              transform: scale(0.95);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+  }
+} 

@@ -5,6 +5,7 @@ const User = require("../models/User");
 const router = express.Router();
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const { sendPasswordResetEmail } = require("../services/emailService");
 
 // register user
 router.post("/register", async (req, res) => {
@@ -82,56 +83,50 @@ router.post("/forgot-password", async (req, res) => {
         // Create reset URL - Make sure it's properly encoded
         const resetUrl = encodeURI(`http://localhost:3000/reset-password/${resetToken}`);
         
-        // Setup email transporter
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
+        try {
+            // Send email using the email service
+            await sendPasswordResetEmail(email, resetUrl);
+            
+            res.status(200).json({ 
+                success: true,
+                message: "Password reset link sent to your email"
+            });
+        } catch (emailError) {
+            console.error("Email sending error:", emailError);
+            
+            // Clear the reset token since email failed
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            await user.save();
+            
+            // Return appropriate error message
+            if (emailError.message.includes('Invalid email address')) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid email address format"
+                });
+            } else if (emailError.message.includes('recipient not found')) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email address not found or unable to receive mail"
+                });
+            } else if (emailError.message.includes('authentication failed')) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Email service configuration error. Please contact support."
+                });
+            } else {
+                return res.status(500).json({
+                    success: false,
+                    message: "Failed to send reset email. Please try again later."
+                });
             }
-        });
-        
-        // Email options
-        const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: "Password Reset Request",
-            text: `Reset your password by visiting this link: ${resetUrl}`, // Plain text version
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-                    <h1 style="color: #333; text-align: center;">Password Reset</h1>
-                    <p style="color: #555; font-size: 16px;">You requested a password reset. Please click the button below to reset your password:</p>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="${resetUrl}" style="background-color: #4a6cf7; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Reset Password</a>
-                    </div>
-                    
-                    <p style="color: #555; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
-                    <p style="background-color: #f5f5f5; padding: 10px; border-radius: 3px; word-break: break-all; font-size: 14px;">${resetUrl}</p>
-                    
-                    <p style="color: #555; font-size: 14px;">This link will expire in 30 minutes.</p>
-                    <p style="color: #777; font-size: 14px;">If you did not request this, please ignore this email.</p>
-                    
-                    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center; color: #777; font-size: 12px;">
-                        <p>This is an automated email. Please do not reply.</p>
-                    </div>
-                </div>
-            `
-        };
-        
-        // Send email
-        await transporter.sendMail(mailOptions);
-        
-        res.status(200).json({ 
-            success: true,
-            message: "Password reset link sent to your email"
-        });
-        
+        }
     } catch (error) {
         console.error("Password reset error:", error);
         res.status(500).json({ 
             success: false,
-            message: "Failed to send reset email. Please try again later." 
+            message: "An unexpected error occurred. Please try again later." 
         });
     }
 });

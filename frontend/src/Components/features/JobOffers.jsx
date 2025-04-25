@@ -1,150 +1,85 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaCode, FaChartLine, FaPalette, FaShieldAlt, FaMobile, FaDatabase, FaRobot, FaGlobe } from 'react-icons/fa';
+import { FaCode, FaChartLine, FaPalette, FaShieldAlt, FaMobile, FaDatabase } from 'react-icons/fa';
+import axios from 'axios';
 import '../../styles/JobOffers.scss';
 
 const JobOffers = () => {
-  const [jobOffers, setJobOffers] = useState([
-    {
-      id: 1,
-      title: 'Senior Software Engineer',
-      company: 'Tech Solutions Inc.',
-      location: 'Remote',
-      type: 'Full-time',
-      icon: <FaCode />,
-      category: 'Engineering',
-      description: 'We are looking for an experienced software engineer to join our team and help build innovative solutions.',
-      requirements: [
-        '5+ years of experience in software development',
-        'Strong knowledge of React and Node.js',
-        'Experience with cloud services (AWS/GCP)',
-        'Excellent problem-solving skills',
-        'Strong communication abilities'
-      ],
-      salary: '$120,000 - $150,000',
-      postedDate: '2 days ago'
-    },
-    {
-      id: 2,
-      title: 'Product Manager',
-      company: 'Innovate Corp',
-      location: 'New York, NY',
-      type: 'Full-time',
-      icon: <FaChartLine />,
-      category: 'Product',
-      description: 'Join our product team to drive innovation and create exceptional user experiences.',
-      requirements: [
-        '3+ years of product management experience',
-        'Strong analytical skills',
-        'Excellent communication abilities',
-        'Experience with agile methodologies',
-        'Data-driven decision making'
-      ],
-      salary: '$100,000 - $130,000',
-      postedDate: '1 week ago'
-    },
-    {
-      id: 3,
-      title: 'UX/UI Designer',
-      company: 'Creative Minds',
-      location: 'San Francisco, CA',
-      type: 'Full-time',
-      icon: <FaPalette />,
-      category: 'Design',
-      description: 'Looking for a creative designer to shape our digital products and create beautiful user experiences.',
-      requirements: [
-        'Portfolio demonstrating UI/UX work',
-        'Experience with Figma/Sketch',
-        'Understanding of user-centered design',
-        'Strong visual design skills',
-        'Experience with design systems'
-      ],
-      salary: '$90,000 - $120,000',
-      postedDate: '3 days ago'
-    },
-    {
-      id: 4,
-      title: 'Security Engineer',
-      company: 'SecureTech',
-      location: 'Remote',
-      type: 'Full-time',
-      icon: <FaShieldAlt />,
-      category: 'Security',
-      description: 'Help us build and maintain secure systems to protect our users and their data.',
-      requirements: [
-        '4+ years of security engineering experience',
-        'Knowledge of security best practices',
-        'Experience with penetration testing',
-        'Understanding of encryption methods',
-        'Security certifications preferred'
-      ],
-      salary: '$130,000 - $160,000',
-      postedDate: '5 days ago'
-    },
-    {
-      id: 5,
-      title: 'Mobile Developer',
-      company: 'AppWorks',
-      location: 'Austin, TX',
-      type: 'Full-time',
-      icon: <FaMobile />,
-      category: 'Mobile',
-      description: 'Join our mobile team to build beautiful and performant applications for iOS and Android.',
-      requirements: [
-        '3+ years of mobile development experience',
-        'Strong knowledge of React Native',
-        'Experience with native development',
-        'Understanding of mobile UI/UX',
-        'Performance optimization skills'
-      ],
-      salary: '$110,000 - $140,000',
-      postedDate: '1 day ago'
-    },
-    {
-      id: 6,
-      title: 'Data Scientist',
-      company: 'DataInsights',
-      location: 'Boston, MA',
-      type: 'Full-time',
-      icon: <FaDatabase />,
-      category: 'Data',
-      description: 'Help us extract valuable insights from our data and build predictive models.',
-      requirements: [
-        '4+ years of data science experience',
-        'Strong Python and SQL skills',
-        'Experience with machine learning',
-        'Statistical analysis expertise',
-        'Data visualization skills'
-      ],
-      salary: '$140,000 - $170,000',
-      postedDate: '4 days ago'
-    }
-  ]);
-
+  const [jobOffers, setJobOffers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const fetchJobOffers = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/job-applications/offers');
+        if (response.data && Array.isArray(response.data)) {
+          setJobOffers(response.data);
+        } else {
+          setError('Invalid response format from server');
+        }
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching job offers:', err);
+        setError(err.response?.data?.message || 'Failed to fetch job offers. Please try again later.');
+        setLoading(false);
+      }
+    };
+
+    fetchJobOffers();
+  }, []);
+
+  const getIconForCategory = (category) => {
+    switch (category.toLowerCase()) {
+      case 'engineering':
+        return <FaCode />;
+      case 'product':
+        return <FaChartLine />;
+      case 'design':
+        return <FaPalette />;
+      case 'security':
+        return <FaShieldAlt />;
+      case 'mobile':
+        return <FaMobile />;
+      case 'data':
+        return <FaDatabase />;
+      default:
+        return <FaCode />;
+    }
+  };
+
   const handleApply = (jobId, jobTitle) => {
-    // Force redirect to login page first
-    navigate('/login', { 
+    navigate('/features/job-application', { 
       state: { 
-        from: '/jobApplication',
-        jobInfo: { jobId, jobTitle }
+        jobId, 
+        jobTitle 
       } 
     });
   };
 
+  if (loading) {
+    return <div className="loading">Loading job offers...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
+
   return (
     <div className="job-offers-container">
       <div className="job-offers-header">
-        <h1>Available Job Positions</h1>
-        <p>Find your next career opportunity with us</p>
+        <div>
+          <h1>Available Job Positions</h1>
+          <p>Find your next career opportunity with us</p>
+        </div>
       </div>
 
       <div className="job-offers-grid">
         {jobOffers.map((job) => (
-          <div key={job.id} className="job-card">
+          <div key={job._id} className="job-card">
             <div className="job-card-header">
-              <div className="job-icon">{job.icon}</div>
+              <div className="job-icon">{getIconForCategory(job.category)}</div>
               <div className="job-title-info">
                 <h2>{job.title}</h2>
                 <span className="job-category">{job.category}</span>
@@ -181,7 +116,7 @@ const JobOffers = () => {
 
             <button 
               className="apply-button"
-              onClick={() => handleApply(job.id, job.title)}
+              onClick={() => handleApply(job._id, job.title)}
             >
               Apply Now
             </button>

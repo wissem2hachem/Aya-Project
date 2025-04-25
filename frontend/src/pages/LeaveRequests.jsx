@@ -11,7 +11,30 @@ import {
   FiSave
 } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
+import axios from 'axios';
 import "./LeaveRequests.scss";
+
+// Add axios instance configuration
+const api = axios.create({
+  baseURL: 'http://localhost:5000',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add request interceptor to include token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default function LeaveRequests() {
   const { userRole, currentUser, hasPermission } = useAuth();
@@ -22,12 +45,12 @@ export default function LeaveRequests() {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // New request form data
   const [newRequest, setNewRequest] = useState({
-    employeeId: currentUser?.employeeId || "",
-    employeeName: currentUser?.name || "",
-    department: currentUser?.department || "",
     type: "Annual Leave",
     startDate: "",
     endDate: "",
@@ -36,69 +59,169 @@ export default function LeaveRequests() {
 
   // Form validation errors
   const [formErrors, setFormErrors] = useState({});
-  
-  // Initialize leave requests from localStorage if available
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  useEffect(() => {
-    const savedRequests = localStorage.getItem('leaveRequests');
-    if (savedRequests) {
-      setLeaveRequests(JSON.parse(savedRequests));
-    }
-  }, []);
 
-  // Save leave requests to localStorage whenever they change
+  // Fetch leave requests from backend
   useEffect(() => {
-    localStorage.setItem('leaveRequests', JSON.stringify(leaveRequests));
-  }, [leaveRequests]);
+    const fetchLeaveRequests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        if (!currentUser) {
+          setError('Please log in to view leave requests');
+          setLoading(false);
+          return;
+        }
 
-  // Initialize form data with current user info when available
-  useEffect(() => {
+        // Use different endpoints based on user role
+        const endpoint = hasPermission(['admin', 'hr', 'manager']) 
+          ? '/api/leave-requests'  // Get all requests for managers/admins
+          : '/api/leave-requests/my-requests';  // Get only user's requests for regular employees
+
+        const response = await api.get(endpoint);
+        setLeaveRequests(response.data);
+      } catch (err) {
+        console.error('Error fetching leave requests:', err);
+        if (err.response?.status === 401) {
+          setError('Your session has expired. Please log in again.');
+        } else {
+          setError(err.response?.data?.message || 'Failed to fetch leave requests');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (currentUser) {
-      setNewRequest(prev => ({
-        ...prev,
-        employeeId: currentUser.employeeId || "",
-        employeeName: currentUser.name || "",
-        department: currentUser.department || ""
-      }));
+      fetchLeaveRequests();
     }
-  }, [currentUser]);
+  }, [currentUser, hasPermission]);
+
+  // Function to submit new leave request
+  const handleSubmitRequest = async (e) => {
+    e.preventDefault();
+    
+    if (!currentUser) {
+      setError('Please log in to submit a leave request');
+      return;
+    }
+    
+    const isValid = validateForm();
+    
+    if (isValid) {
+      setIsSubmitting(true);
+      setError(null);
+      setFormErrors({});
+      
+      try {
+        const requestData = {
+          type: newRequest.type,
+          startDate: newRequest.startDate,
+          endDate: newRequest.endDate,
+          reason: newRequest.reason.trim()
+        };
+        
+        console.log('Submitting leave request:', requestData);
+        const response = await api.post('/api/leave-requests', requestData);
+        console.log('Server response:', response.data);
+        
+        // Update the leave requests list with the new request
+        setLeaveRequests(prevRequests => [response.data, ...prevRequests]);
+        setSuccessMessage(`Leave request for ${newRequest.type} has been submitted successfully`);
+        setIsNewRequestOpen(false);
+        setNewRequest({
+          type: "Annual Leave",
+          startDate: "",
+          endDate: "",
+          reason: "",
+        });
+      } catch (err) {
+        console.error('Error submitting leave request:', err.response || err);
+        
+        // Handle validation errors from the server
+        if (err.response?.data?.details) {
+          setFormErrors(err.response.data.details);
+          setError('Please correct the errors in the form');
+        } else if (err.response?.status === 401) {
+          setError('Your session has expired. Please log in again.');
+        } else {
+          setError(err.response?.data?.message || 'Failed to submit leave request. Please try again.');
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  // Function to handle status changes
+  const handleStatusChange = async (id, newStatus) => {
+    if (!hasPermission(['admin', 'hr', 'manager'])) return;
+    
+    try {
+      setError(null);
+      const response = await api.patch(`/api/leave-requests/${id}/status`, { status: newStatus });
+      
+      setLeaveRequests(prevRequests =>
+        prevRequests.map(request =>
+          request._id === id ? response.data : request
+        )
+      );
+      setShowRequestDetails(null);
+      setSuccessMessage('Leave request status updated successfully');
+    } catch (err) {
+      console.error('Error updating leave request status:', err);
+      if (err.response?.status === 401) {
+        setError('Your session has expired. Please log in again.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to update leave request status');
+      }
+    }
+  };
+
+  // Function to delete leave request
+  const handleDeleteRequest = async (id) => {
+    try {
+      setError(null);
+      await api.delete(`/api/leave-requests/${id}`);
+      
+      setLeaveRequests(prevRequests =>
+        prevRequests.filter(request => request._id !== id)
+      );
+      setSuccessMessage('Leave request deleted successfully');
+    } catch (err) {
+      console.error('Error deleting leave request:', err);
+      if (err.response?.status === 401) {
+        setError('Your session has expired. Please log in again.');
+      } else {
+        setError(err.response?.data?.message || 'Failed to delete leave request');
+      }
+    }
+  };
 
   // Filter leave requests based on search, status filter, and user role
   const filteredRequests = leaveRequests.filter(request => {
-    // Debug logging for filtering
-    console.log('Filtering request:', {
-      requestEmployeeId: request.employeeId,
-      currentUserId: currentUser?._id,
-      userRole: userRole,
-      hasPermission: hasPermission(['admin', 'hr', 'manager'])
-    });
-
     // Role-based filtering:
     // - If user is admin, HR, or manager: show all requests
     // - If user is a regular employee: only show their own requests
     if (!hasPermission(['admin', 'hr', 'manager'])) {
       // Regular employee - only show their own requests
       if (!currentUser?._id) {
-        console.log('No user ID found for current user');
         return false;
       }
       // Convert both IDs to strings and compare
       const requestId = String(request.employeeId).trim();
       const currentUserId = String(currentUser._id).trim();
-      console.log('Comparing IDs:', { requestId, currentUserId });
       
       if (requestId !== currentUserId) {
-        console.log('IDs do not match');
         return false;
       }
-      console.log('IDs match, showing request');
     }
     
     // Apply search filter
     const matchesSearch = 
-      request.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.department.toLowerCase().includes(searchTerm.toLowerCase());
+      (request.employeeName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.type?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (request.department?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     
     // Apply status filter
     const matchesFilter = 
@@ -106,26 +229,6 @@ export default function LeaveRequests() {
     
     return matchesSearch && matchesFilter;
   });
-
-  // Function to handle status changes - only for HR/admin/manager
-  const handleStatusChange = (id, newStatus, rejectionReason = null) => {
-    if (!hasPermission(['admin', 'hr', 'manager'])) return;
-    
-    setLeaveRequests(prevRequests =>
-      prevRequests.map(request =>
-        request.id === id
-          ? {
-              ...request,
-              status: newStatus,
-              approver: currentUser?.name || "Admin",
-              approvedDate: new Date().toISOString().split('T')[0],
-              ...(rejectionReason && { rejectionReason })
-            }
-          : request
-      )
-    );
-    setShowRequestDetails(null);
-  };
 
   // Function to format date
   const formatDate = (dateString) => {
@@ -156,31 +259,17 @@ export default function LeaveRequests() {
   // Function to handle new request form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewRequest({
-      ...newRequest,
+    console.log(`Input changed - ${name}:`, value);
+    setNewRequest(prev => ({
+      ...prev,
       [name]: value
-    });
+    }));
   };
 
   // Function to validate form
   const validateForm = () => {
+    console.log('Validating form with data:', newRequest);
     const errors = {};
-    
-    // Only validate employee info fields if user is admin or HR
-    // Regular employees use their own info automatically
-    if (hasPermission(['admin', 'hr'])) {
-      if (!newRequest.employeeName.trim()) {
-        errors.employeeName = "Employee name is required";
-      }
-      
-      if (!newRequest.employeeId.trim()) {
-        errors.employeeId = "Employee ID is required";
-      }
-      
-      if (!newRequest.department.trim()) {
-        errors.department = "Department is required";
-      }
-    }
     
     if (!newRequest.type.trim()) {
       errors.type = "Leave type is required";
@@ -188,115 +277,37 @@ export default function LeaveRequests() {
     
     if (!newRequest.startDate) {
       errors.startDate = "Start date is required";
+    } else {
+      const startDate = new Date(newRequest.startDate);
+      if (isNaN(startDate.getTime())) {
+        errors.startDate = "Invalid start date";
+      }
     }
     
     if (!newRequest.endDate) {
       errors.endDate = "End date is required";
+    } else {
+      const endDate = new Date(newRequest.endDate);
+      if (isNaN(endDate.getTime())) {
+        errors.endDate = "Invalid end date";
+      }
     }
     
-    if (newRequest.startDate && newRequest.endDate && new Date(newRequest.startDate) > new Date(newRequest.endDate)) {
-      errors.endDate = "End date must be after start date";
+    if (newRequest.startDate && newRequest.endDate) {
+      const startDate = new Date(newRequest.startDate);
+      const endDate = new Date(newRequest.endDate);
+      if (startDate > endDate) {
+        errors.endDate = "End date must be after start date";
+      }
     }
     
     if (!newRequest.reason.trim()) {
       errors.reason = "Reason is required";
     }
     
+    console.log('Validation errors:', errors);
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
-  };
-
-  // Function to submit new leave request
-  const handleSubmitRequest = (e) => {
-    e.preventDefault();
-    
-    if (validateForm()) {
-      setIsSubmitting(true);
-      
-      // Calculate duration
-      const start = new Date(newRequest.startDate);
-      const end = new Date(newRequest.endDate);
-      const diffTime = Math.abs(end - start);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      
-      // For regular employees, use current user info or generate defaults if missing
-      let employeeId = newRequest.employeeId;
-      let employeeName = newRequest.employeeName;
-      let department = newRequest.department;
-      
-      if (!hasPermission(['admin', 'hr'])) {
-        // Use the user's _id as employeeId
-        employeeId = String(currentUser?._id).trim();
-        employeeName = currentUser?.name || "Employee";
-        department = currentUser?.department || "General";
-        
-        console.log('Setting employee info for new request:', {
-          employeeId,
-          employeeName,
-          department,
-          currentUser
-        });
-      }
-      
-      // Create new request object with the current user's info
-      const newLeaveRequest = {
-        id: Date.now(), // Use timestamp as ID to ensure uniqueness
-        employeeId: employeeId,
-        employeeName: employeeName,
-        department: department,
-        type: newRequest.type,
-        startDate: newRequest.startDate,
-        endDate: newRequest.endDate,
-        duration: `${diffDays} days`,
-        reason: newRequest.reason,
-        status: "pending",
-        submitDate: new Date().toISOString().split('T')[0]
-      };
-      
-      console.log('Submitting new request:', newLeaveRequest);
-      
-      // Add to requests and ensure it's immediately visible
-      setLeaveRequests(prevRequests => {
-        const updatedRequests = [...prevRequests, newLeaveRequest];
-        // Save to localStorage immediately
-        localStorage.setItem('leaveRequests', JSON.stringify(updatedRequests));
-        console.log('Updated requests:', updatedRequests);
-        return updatedRequests;
-      });
-      
-      // Set filter to "all" to ensure the new request is visible
-      setFilterStatus("all");
-      setSearchTerm(""); // Clear search to ensure the new request is visible
-      
-      // Show success message
-      setSuccessMessage(`Leave request for ${newRequest.type} has been submitted successfully`);
-      
-      // Clear success message after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-      }, 5000);
-      
-      // Reset form and close modal
-      setNewRequest({
-        employeeId: currentUser?._id || "",
-        employeeName: currentUser?.name || "",
-        department: currentUser?.department || "",
-        type: "Annual Leave",
-        startDate: "",
-        endDate: "",
-        reason: "",
-      });
-      setIsSubmitting(false);
-      setIsNewRequestOpen(false);
-      
-      // Scroll to the leave table
-      setTimeout(() => {
-        const tableElement = document.querySelector('.leave-table');
-        if (tableElement) {
-          tableElement.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
   };
 
   // Add a function to get all requests for the current user
