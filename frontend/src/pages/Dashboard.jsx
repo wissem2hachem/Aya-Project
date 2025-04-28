@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiUsers, FiCalendar, FiClock, FiBriefcase, FiDollarSign, FiBarChart2, FiUser, FiEdit, FiCheckCircle, FiXCircle, FiInfo } from "react-icons/fi";
+import { FiUsers, FiCalendar, FiClock, FiBriefcase, FiDollarSign, FiBarChart2, FiUser, FiEdit, FiInfo } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
@@ -10,8 +10,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  const [loadingRequests, setLoadingRequests] = useState(true);
   const { userRole, hasPermission } = useAuth();
 
   // Fetch user profile data
@@ -41,42 +39,6 @@ export default function Dashboard() {
     fetchUserProfile();
   }, []);
 
-  // Fetch leave requests
-  useEffect(() => {
-    const fetchLeaveRequests = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        const response = await axios.get("http://localhost:5000/api/leave-requests?limit=3&status=pending", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        
-        // Transform the data to match the expected format
-        const formattedRequests = response.data.map(request => ({
-          id: request._id,
-          employeeName: request.employeeId?.name || 'Unknown Employee',
-          department: request.department || 'Unknown Department',
-          type: request.type,
-          startDate: request.startDate,
-          endDate: request.endDate,
-          status: request.status,
-          avatar: `https://ui-avatars.com/api/?name=${request.employeeId?.name?.charAt(0) || 'U'}&background=3498db&color=fff`
-        }));
-        
-        setLeaveRequests(formattedRequests);
-        setLoadingRequests(false);
-      } catch (error) {
-        console.error("Error fetching leave requests:", error);
-        setLoadingRequests(false);
-      }
-    };
-
-    fetchLeaveRequests();
-  }, []);
-
   // Mock data for dashboard statistics
   const stats = [
     { id: 1, title: 'Total Employees', value: '128', icon: <FiUsers />, color: '#3498db' },
@@ -102,106 +64,6 @@ export default function Dashboard() {
   const handleNavigateToPayroll = () => navigate('/payroll');
   const handleNavigateToDepartments = () => navigate('/departments');
   const handleNavigateToProfile = () => navigate('/profile');
-  const handleNavigateToLeaveRequests = () => navigate('/leave-requests');
-
-  // Function to handle approving a leave request
-  const handleApproveRequest = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("No token found");
-        return;
-      }
-
-      const response = await axios.patch(
-        `http://localhost:5000/api/leave-requests/${id}/status`,
-        { status: 'approved' },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      
-      if (response.data) {
-        // Update local state with the new data
-        setLeaveRequests(prev => 
-          prev.map(request => 
-            request.id === id ? {
-              ...request,
-              status: 'approved',
-              approvedBy: response.data.approvedBy?.name || 'Unknown',
-              approvedDate: response.data.approvedDate
-            } : request
-          )
-        );
-        alert('Leave request approved successfully');
-      }
-    } catch (error) {
-      console.error("Error approving leave request:", error);
-      alert(error.response?.data?.message || 'Failed to approve leave request');
-    }
-  };
-
-  // Function to handle rejecting a leave request
-  const handleRejectRequest = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("No token found");
-        return;
-      }
-
-      const reason = window.prompt("Please enter the reason for rejection:");
-      if (!reason) {
-        return; // User cancelled the prompt
-      }
-
-      const response = await axios.patch(
-        `http://localhost:5000/api/leave-requests/${id}/status`,
-        { 
-          status: 'rejected',
-          rejectionReason: reason
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
-      
-      if (response.data) {
-        // Update local state with the new data
-        setLeaveRequests(prev => 
-          prev.map(request => 
-            request.id === id ? {
-              ...request,
-              status: 'rejected',
-              rejectionReason: reason,
-              approvedBy: response.data.approvedBy?.name || 'Unknown',
-              approvedDate: response.data.approvedDate
-            } : request
-          )
-        );
-        alert('Leave request rejected successfully');
-      }
-    } catch (error) {
-      console.error("Error rejecting leave request:", error);
-      alert(error.response?.data?.message || 'Failed to reject leave request');
-    }
-  };
-
-  // Function to render status badge
-  const renderStatusBadge = (status) => {
-    switch(status) {
-      case 'approved':
-        return <span className="status-badge approved"><FiCheckCircle /> Approved</span>;
-      case 'rejected':
-        return <span className="status-badge rejected"><FiXCircle /> Rejected</span>;
-      default:
-        return <span className="status-badge pending"><FiClock /> Pending</span>;
-    }
-  };
 
   return (
     <div className="dashboard-page">
@@ -225,10 +87,10 @@ export default function Dashboard() {
             <h3>Welcome, {userRole === 'hr' ? 'HR Staff' : userRole === 'manager' ? 'Manager' : 'Employee'}</h3>
             <p>
               {userRole === 'hr' 
-                ? 'You have access to HR functions including employees, attendance, leave requests, payroll, and recruitment.' 
+                ? 'You have access to HR functions including employees, attendance, payroll, and recruitment.' 
                 : userRole === 'manager' 
                 ? 'You have access to view employee information, attendance records, and user management.' 
-                : 'You can view and submit leave requests. Contact your HR department for any questions.'}
+                : 'You can view your profile and attendance records. Contact your HR department for any questions.'}
             </p>
           </div>
         </div>
@@ -288,74 +150,6 @@ export default function Dashboard() {
           ) : (
             <div className="profile-error">
               <p>Could not load profile data. Please log in again.</p>
-            </div>
-          )}
-        </div>
-
-        {/* Leave Requests Summary Card */}
-        <div className="dashboard-card leave-requests-card">
-          <div className="leave-requests-header">
-            <h2>Leave Requests</h2>
-            <button className="view-all-btn" onClick={handleNavigateToLeaveRequests}>
-              View All
-            </button>
-          </div>
-          
-          {loadingRequests ? (
-            <div className="loading-requests">Loading leave requests...</div>
-          ) : leaveRequests.length > 0 ? (
-            <ul className="leave-requests-list">
-              {leaveRequests.map(request => (
-                <li key={request.id} className="leave-request-item">
-                  <div className="request-header">
-                    <div className="employee-info">
-                      <img 
-                        src={request.avatar} 
-                        alt={request.employeeName} 
-                        className="employee-avatar"
-                      />
-                      <div>
-                        <h3 className="employee-name">{request.employeeName}</h3>
-                        <p className="employee-department">{request.department}</p>
-                      </div>
-                    </div>
-                    {renderStatusBadge(request.status)}
-                  </div>
-                  
-                  <div className="request-details">
-                    <div className="request-type">
-                      <span className="label">Type:</span>
-                      <span className="value">{request.type}</span>
-                    </div>
-                    <div className="request-dates">
-                      <span className="label">Dates:</span>
-                      <span className="value">{request.startDate} to {request.endDate}</span>
-                    </div>
-                  </div>
-                  
-                  {request.status === 'pending' && hasPermission(['admin', 'hr', 'manager']) && (
-                    <div className="request-actions">
-                      <button 
-                        className="approve-btn"
-                        onClick={() => handleApproveRequest(request.id)}
-                      >
-                        <FiCheckCircle /> Approve
-                      </button>
-                      <button 
-                        className="reject-btn"
-                        onClick={() => handleRejectRequest(request.id)}
-                      >
-                        <FiXCircle /> Reject
-                      </button>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="empty-requests">
-              <FiCalendar className="empty-icon" />
-              <p>No leave requests at the moment</p>
             </div>
           )}
         </div>

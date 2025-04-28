@@ -208,10 +208,13 @@
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
           min-width: 180px;
-          z-index: 10;
+          z-index: 1000;
           overflow: hidden;
-          // display is now controlled by JavaScript
-          // display: none;
+          display: none;
+
+          &.show {
+            display: block;
+          }
 
           button {
             width: 100%;
@@ -235,11 +238,6 @@
             }
           }
         }
-
-        // Remove hover-based display as we're using JS toggle
-        // &:hover .dropdown-content {
-        //   display: block;
-        // }
       }
 
       .export-button {

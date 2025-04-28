@@ -1,268 +1,244 @@
-import React, { useState } from "react";
-import { 
-  FiSearch, 
-  FiCalendar, 
-  FiClock, 
-  FiFilter, 
-  FiDownload, 
-  FiCheck, 
-  FiX,
-  FiChevronLeft,
-  FiChevronRight
-} from "react-icons/fi";
+import React, { useState, useEffect } from "react";
+import { FiCheck, FiX, FiCalendar, FiClock, FiUser } from "react-icons/fi";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 import "./Attendance.scss";
 
 export default function Attendance() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [viewMode, setViewMode] = useState("daily"); // daily, weekly, monthly
-  const [filterStatus, setFilterStatus] = useState("all"); // all, present, absent, late
+  const [employees, setEmployees] = useState([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [error, setError] = useState(null);
+  const { hasPermission } = useAuth();
 
-  // Mock data for attendance records
-  const attendanceRecords = [
-    { id: 1, employeeId: "EMP001", name: "Ali Ben Salah", status: "present", checkIn: "08:45", checkOut: "17:30", department: "IT" },
-    { id: 2, employeeId: "EMP002", name: "Sarah Johnson", status: "present", checkIn: "09:05", checkOut: "18:15", department: "Human Resources" },
-    { id: 3, employeeId: "EMP003", name: "Michael Brown", status: "absent", checkIn: "-", checkOut: "-", department: "Management" },
-    { id: 4, employeeId: "EMP004", name: "Emily Davis", status: "late", checkIn: "10:20", checkOut: "18:30", department: "Marketing" },
-    { id: 5, employeeId: "EMP005", name: "David Wilson", status: "present", checkIn: "08:50", checkOut: "17:45", department: "Finance" },
-    { id: 6, employeeId: "EMP006", name: "Lisa Wang", status: "half-day", checkIn: "08:30", checkOut: "13:00", department: "IT" },
-    { id: 7, employeeId: "EMP007", name: "John Smith", status: "present", checkIn: "09:00", checkOut: "18:00", department: "Operations" },
-    { id: 8, employeeId: "EMP008", name: "Amanda Martinez", status: "absent", checkIn: "-", checkOut: "-", department: "Marketing" }
-  ];
+  // Fetch employees for attendance marking
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      if (!hasPermission(['admin', 'hr', 'manager'])) {
+        setLoadingEmployees(false);
+        return;
+      }
 
-  // Filter records based on search term and status filter
-  const filteredRecords = attendanceRecords.filter(record => {
-    const matchesSearch = record.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         record.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.department.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterStatus === "all" || record.status === filterStatus;
-    
-    return matchesSearch && matchesFilter;
-  });
+      try {
+        setLoadingEmployees(true);
+        setError(null);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setError("Authentication token not found");
+          return;
+        }
 
-  // Format date for display
-  const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
+        const response = await axios.get("http://localhost:5000/api/users", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
 
-  // Handle date navigation
-  const navigateDate = (direction) => {
-    const newDate = new Date(selectedDate);
-    if (viewMode === "daily") {
-      newDate.setDate(newDate.getDate() + direction);
-    } else if (viewMode === "weekly") {
-      newDate.setDate(newDate.getDate() + (direction * 7));
-    } else if (viewMode === "monthly") {
-      newDate.setMonth(newDate.getMonth() + direction);
+        // Get attendance status for each employee for the selected date
+        const employeesWithAttendance = await Promise.all(
+          response.data.map(async (employee) => {
+            try {
+              const attendanceResponse = await axios.get(
+                `http://localhost:5000/api/attendance/employee/${employee._id}?startDate=${selectedDate}&endDate=${selectedDate}`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`
+                  }
+                }
+              );
+              return {
+                ...employee,
+                attendance: attendanceResponse.data[0] || null
+              };
+            } catch (error) {
+              console.error(`Error fetching attendance for ${employee.name}:`, error);
+              return {
+                ...employee,
+                attendance: null
+              };
+            }
+          })
+        );
+
+        setEmployees(employeesWithAttendance);
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+        setError(error.response?.data?.message || "Failed to fetch employees");
+      } finally {
+        setLoadingEmployees(false);
+      }
+    };
+
+    fetchEmployees();
+  }, [selectedDate, hasPermission]);
+
+  // Function to mark attendance
+  const handleMarkAttendance = async (employeeId, status) => {
+    try {
+      setError(null);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:5000/api/attendance",
+        {
+          employeeId,
+          date: selectedDate,
+          status,
+          checkIn: status === 'present' ? new Date().toISOString() : undefined
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // Update the employees list with the new attendance record
+      setEmployees(prevEmployees =>
+        prevEmployees.map(emp =>
+          emp._id === employeeId
+            ? { ...emp, attendance: response.data }
+            : emp
+        )
+      );
+
+      // Show success message
+      alert('Attendance marked successfully');
+    } catch (error) {
+      console.error("Error marking attendance:", error);
+      setError(error.response?.data?.message || "Failed to mark attendance");
+      alert(error.response?.data?.message || "Failed to mark attendance");
     }
-    setSelectedDate(newDate);
   };
 
-  // Get status color and icon
-  const getStatusInfo = (status) => {
-    switch(status) {
-      case "present":
-        return { color: "#22c55e", icon: <FiCheck /> };
-      case "absent":
-        return { color: "#ef4444", icon: <FiX /> };
-      case "late":
-        return { color: "#f59e0b", icon: <FiClock /> };
-      case "half-day":
-        return { color: "#6366f1", icon: <FiClock /> };
-      default:
-        return { color: "#9ca3af", icon: null };
-    }
+  // Function to handle date change
+  const handleDateChange = (e) => {
+    setSelectedDate(e.target.value);
   };
+
+  // Calculate attendance statistics
+  const calculateStats = () => {
+    const total = employees.length;
+    const present = employees.filter(emp => emp.attendance?.status === 'present').length;
+    const absent = employees.filter(emp => emp.attendance?.status === 'absent').length;
+    const pending = employees.filter(emp => !emp.attendance).length;
+
+    return {
+      total,
+      present,
+      absent,
+      pending,
+      presentPercentage: total ? Math.round((present / total) * 100) : 0,
+      absentPercentage: total ? Math.round((absent / total) * 100) : 0,
+      pendingPercentage: total ? Math.round((pending / total) * 100) : 0
+    };
+  };
+
+  const stats = calculateStats();
 
   return (
     <div className="attendance-page">
       <header className="page-header">
         <h1>Attendance Management</h1>
-        <div className="view-selector">
-          <button 
-            className={viewMode === "daily" ? "active" : ""} 
-            onClick={() => setViewMode("daily")}
-          >
-            Daily
-          </button>
-          <button 
-            className={viewMode === "weekly" ? "active" : ""} 
-            onClick={() => setViewMode("weekly")}
-          >
-            Weekly
-          </button>
-          <button 
-            className={viewMode === "monthly" ? "active" : ""} 
-            onClick={() => setViewMode("monthly")}
-          >
-            Monthly
-          </button>
+        <div className="date-picker">
+          <FiCalendar className="icon" />
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={handleDateChange}
+            className="date-input"
+          />
         </div>
       </header>
 
-      <div className="date-navigation">
-        <button className="nav-button" onClick={() => navigateDate(-1)}>
-          <FiChevronLeft />
-        </button>
-        <div className="date-display">
-          <FiCalendar />
-          <span>{formatDate(selectedDate)}</span>
+      {error && (
+        <div className="error-message">
+          <p>{error}</p>
         </div>
-        <button className="nav-button" onClick={() => navigateDate(1)}>
-          <FiChevronRight />
-        </button>
-      </div>
+      )}
 
-      <div className="attendance-stats">
-        <div className="stat-card">
-          <div className="stat-content">
-            <h3>Present</h3>
-            <p className="stat-value">82%</p>
-          </div>
-          <div className="stat-indicator" style={{ backgroundColor: "#22c55e" }}></div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-content">
-            <h3>Absent</h3>
-            <p className="stat-value">10%</p>
-          </div>
-          <div className="stat-indicator" style={{ backgroundColor: "#ef4444" }}></div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-content">
-            <h3>Late</h3>
-            <p className="stat-value">5%</p>
-          </div>
-          <div className="stat-indicator" style={{ backgroundColor: "#f59e0b" }}></div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-content">
-            <h3>Half Day</h3>
-            <p className="stat-value">3%</p>
-          </div>
-          <div className="stat-indicator" style={{ backgroundColor: "#6366f1" }}></div>
-        </div>
-      </div>
-
-      <div className="attendance-actions">
-        <div className="search-container">
-          <FiSearch />
-          <input
-            type="text"
-            placeholder="Search employee name, ID, or department..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="action-buttons">
-          <div className="filter-dropdown">
-            <button className="filter-button">
-              <FiFilter />
-              <span>Filter</span>
-            </button>
-            <div className="dropdown-content">
-              <button 
-                className={filterStatus === "all" ? "active" : ""} 
-                onClick={() => setFilterStatus("all")}
-              >
-                All
-              </button>
-              <button 
-                className={filterStatus === "present" ? "active" : ""} 
-                onClick={() => setFilterStatus("present")}
-              >
-                Present
-              </button>
-              <button 
-                className={filterStatus === "absent" ? "active" : ""} 
-                onClick={() => setFilterStatus("absent")}
-              >
-                Absent
-              </button>
-              <button 
-                className={filterStatus === "late" ? "active" : ""} 
-                onClick={() => setFilterStatus("late")}
-              >
-                Late
-              </button>
+      <div className="attendance-content">
+        <div className="attendance-card">
+          <div className="card-header">
+            <h2>Mark Attendance</h2>
+            <div className="attendance-summary">
+              <div className="summary-item">
+                <span className="label">Present</span>
+                <span className="value">{stats.present}</span>
+                <span className="percentage">({stats.presentPercentage}%)</span>
+              </div>
+              <div className="summary-item">
+                <span className="label">Absent</span>
+                <span className="value">{stats.absent}</span>
+                <span className="percentage">({stats.absentPercentage}%)</span>
+              </div>
+              <div className="summary-item">
+                <span className="label">Pending</span>
+                <span className="value">{stats.pending}</span>
+                <span className="percentage">({stats.pendingPercentage}%)</span>
+              </div>
             </div>
           </div>
-          <button className="export-button">
-            <FiDownload />
-            <span>Export</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="attendance-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Employee ID</th>
-              <th>Name</th>
-              <th>Department</th>
-              <th>Status</th>
-              <th>Check In</th>
-              <th>Check Out</th>
-              <th>Working Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRecords.map((record) => {
-              const statusInfo = getStatusInfo(record.status);
-              const workingHours = record.status === "absent" ? "-" : 
-                (record.checkIn !== "-" && record.checkOut !== "-") ? 
-                calculateHours(record.checkIn, record.checkOut) : "-";
-              
-              return (
-                <tr key={record.id}>
-                  <td>{record.employeeId}</td>
-                  <td>{record.name}</td>
-                  <td>{record.department}</td>
-                  <td>
-                    <div className="status-cell">
-                      <span 
-                        className="status-indicator" 
-                        style={{ backgroundColor: statusInfo.color }}
-                      >
-                        {statusInfo.icon}
-                      </span>
-                      <span className="status-text">{record.status}</span>
+          
+          {loadingEmployees ? (
+            <div className="loading-message">Loading employees...</div>
+          ) : employees.length === 0 ? (
+            <div className="empty-state">
+              <p>No employees found</p>
+            </div>
+          ) : (
+            <div className="attendance-list">
+              {employees.map(employee => (
+                <div key={employee._id} className="attendance-item">
+                  <div className="employee-info">
+                    <img 
+                      src={employee.avatar || `https://ui-avatars.com/api/?name=${employee.name.replace(' ', '+')}&background=3498db&color=fff`}
+                      alt={employee.name}
+                      className="employee-avatar"
+                    />
+                    <div>
+                      <h3>{employee.name}</h3>
+                      <p>{employee.department || 'No Department'}</p>
                     </div>
-                  </td>
-                  <td>{record.checkIn}</td>
-                  <td>{record.checkOut}</td>
-                  <td>{workingHours}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                  </div>
+                  
+                  <div className="attendance-status">
+                    {employee.attendance ? (
+                      <span className={`status-badge ${employee.attendance.status}`}>
+                        {employee.attendance.status.charAt(0).toUpperCase() + employee.attendance.status.slice(1)}
+                        {employee.attendance.checkIn && (
+                          <span className="check-in-time">
+                            <FiClock /> {new Date(employee.attendance.checkIn).toLocaleTimeString()}
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <div className="attendance-actions">
+                        <button
+                          className="mark-present-btn"
+                          onClick={() => handleMarkAttendance(employee._id, 'present')}
+                        >
+                          <FiCheck /> Present
+                        </button>
+                        <button
+                          className="mark-absent-btn"
+                          onClick={() => handleMarkAttendance(employee._id, 'absent')}
+                        >
+                          <FiX /> Absent
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-}
-
-// Utility function to calculate working hours
-function calculateHours(checkIn, checkOut) {
-  if (checkIn === "-" || checkOut === "-") return "-";
-  
-  const [inHour, inMin] = checkIn.split(":").map(Number);
-  const [outHour, outMin] = checkOut.split(":").map(Number);
-  
-  let hours = outHour - inHour;
-  let mins = outMin - inMin;
-  
-  if (mins < 0) {
-    hours -= 1;
-    mins += 60;
-  }
-  
-  return `${hours}h ${mins}m`;
 }
