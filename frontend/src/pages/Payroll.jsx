@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   FiSearch, 
   FiDownload, 
@@ -12,7 +12,30 @@ import {
   FiCreditCard,
   FiPieChart
 } from "react-icons/fi";
+import axios from 'axios';
 import "./Payroll.scss";
+
+// Add axios instance configuration
+const api = axios.create({
+  baseURL: 'http://localhost:5000',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add request interceptor to include token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export default function Payroll() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,108 +43,38 @@ export default function Payroll() {
   const [filterDepartment, setFilterDepartment] = useState("all");
   const [showPayrollDetails, setShowPayrollDetails] = useState(null);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [payrollData, setPayrollData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Mock payroll data
-  const payrollData = [
-    {
-      id: 1,
-      employeeId: "EMP001",
-      employeeName: "Ali Ben Salah",
-      department: "IT",
-      position: "Software Engineer",
-      basicSalary: 5000,
-      overtimePay: 350,
-      bonuses: 500,
-      taxDeductions: 1025,
-      insuranceDeductions: 250,
-      otherDeductions: 75,
-      netPay: 4500,
-      status: "processed",
-      paymentDate: "2023-06-28",
-      paymentMethod: "Bank Transfer",
-      accountNumber: "XXXX-XXXX-7845"
-    },
-    {
-      id: 2,
-      employeeId: "EMP002",
-      employeeName: "Sarah Johnson",
-      department: "Human Resources",
-      position: "HR Manager",
-      basicSalary: 6000,
-      overtimePay: 0,
-      bonuses: 800,
-      taxDeductions: 1220,
-      insuranceDeductions: 300,
-      otherDeductions: 0,
-      netPay: 5280,
-      status: "processed",
-      paymentDate: "2023-06-28",
-      paymentMethod: "Bank Transfer",
-      accountNumber: "XXXX-XXXX-9123"
-    },
-    {
-      id: 3,
-      employeeId: "EMP003",
-      employeeName: "Michael Brown",
-      department: "Management",
-      position: "Project Manager",
-      basicSalary: 7500,
-      overtimePay: 0,
-      bonuses: 1000,
-      taxDeductions: 1700,
-      insuranceDeductions: 400,
-      otherDeductions: 100,
-      netPay: 6300,
-      status: "pending",
-      paymentMethod: "Bank Transfer",
-      accountNumber: "XXXX-XXXX-5678"
-    },
-    {
-      id: 4,
-      employeeId: "EMP004",
-      employeeName: "Emily Davis",
-      department: "Marketing",
-      position: "Marketing Specialist",
-      basicSalary: 4800,
-      overtimePay: 200,
-      bonuses: 350,
-      taxDeductions: 950,
-      insuranceDeductions: 240,
-      otherDeductions: 50,
-      netPay: 4110,
-      status: "processed",
-      paymentDate: "2023-06-28",
-      paymentMethod: "Bank Transfer",
-      accountNumber: "XXXX-XXXX-2345"
-    },
-    {
-      id: 5,
-      employeeId: "EMP005",
-      employeeName: "David Wilson",
-      department: "Finance",
-      position: "Financial Analyst",
-      basicSalary: 5500,
-      overtimePay: 0,
-      bonuses: 400,
-      taxDeductions: 1060,
-      insuranceDeductions: 275,
-      otherDeductions: 0,
-      netPay: 4565,
-      status: "pending",
-      paymentMethod: "Bank Transfer",
-      accountNumber: "XXXX-XXXX-4567"
-    }
-  ];
+  // Fetch payroll data
+  useEffect(() => {
+    const fetchPayrollData = async () => {
+      try {
+        setLoading(true);
+        const response = await api.get(`/api/payroll?month=${currentMonth.toISOString()}`);
+        setPayrollData(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch payroll data');
+        console.error('Error fetching payroll data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPayrollData();
+  }, [currentMonth]);
 
   // Filter payroll data based on search and filter
   const filteredPayroll = payrollData.filter(record => {
     const matchesSearch = 
-      record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.position.toLowerCase().includes(searchTerm.toLowerCase());
+      record.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.employee._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      record.employee.position.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesFilter = 
-      filterDepartment === "all" || record.department === filterDepartment;
+      filterDepartment === "all" || record.employee.department === filterDepartment;
     
     return matchesSearch && matchesFilter;
   });
@@ -167,13 +120,38 @@ export default function Payroll() {
   };
 
   // Get unique departments for filter
-  const departments = [...new Set(payrollData.map(record => record.department))];
+  const departments = [...new Set(payrollData.map(record => record.employee.department))];
 
   // Handle filter change
   const handleFilterChange = (department) => {
     setFilterDepartment(department);
     setIsFilterDropdownOpen(false);
   };
+
+  // Handle process payment
+  const handleProcessPayment = async (payrollId) => {
+    try {
+      await api.put(`/api/payroll/${payrollId}`, {
+        status: 'processed',
+        paymentDate: new Date().toISOString()
+      });
+      
+      // Refresh payroll data
+      const response = await api.get(`/api/payroll?month=${currentMonth.toISOString()}`);
+      setPayrollData(response.data);
+      setShowPayrollDetails(null);
+    } catch (err) {
+      console.error('Error processing payment:', err);
+    }
+  };
+
+  if (loading) {
+    return <div className="loading">Loading payroll data...</div>;
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>;
+  }
 
   return (
     <div className="payroll-page">
@@ -252,7 +230,7 @@ export default function Payroll() {
               <FiFilter />
               <span>Department</span>
             </button>
-            <div className="dropdown-content" style={{ display: isFilterDropdownOpen ? 'block' : 'none' }}>
+            <div className={`dropdown-content ${isFilterDropdownOpen ? 'show' : ''}`}>
               <button 
                 className={filterDepartment === "all" ? "active" : ""} 
                 onClick={() => handleFilterChange("all")}
@@ -295,13 +273,13 @@ export default function Payroll() {
           </thead>
           <tbody>
             {filteredPayroll.map((record) => (
-              <tr key={record.id}>
+              <tr key={record._id}>
                 <td className="employee-cell">
-                  <span className="employee-name">{record.employeeName}</span>
-                  <span className="employee-id">{record.employeeId}</span>
+                  <span className="employee-name">{record.employee.name}</span>
+                  <span className="employee-id">{record.employee._id}</span>
                 </td>
-                <td>{record.position}</td>
-                <td>{record.department}</td>
+                <td>{record.employee.position}</td>
+                <td>{record.employee.department}</td>
                 <td>{formatCurrency(record.basicSalary)}</td>
                 <td>{formatCurrency(record.overtimePay)}</td>
                 <td>{formatCurrency(record.taxDeductions + record.insuranceDeductions + record.otherDeductions)}</td>
@@ -345,10 +323,10 @@ export default function Payroll() {
             </div>
             <div className="modal-body">
               <div className="employee-info">
-                <h4>{showPayrollDetails.employeeName}</h4>
+                <h4>{showPayrollDetails.employee.name}</h4>
                 <p>
-                  {showPayrollDetails.position} • {showPayrollDetails.department} • 
-                  <span className="employee-id">{showPayrollDetails.employeeId}</span>
+                  {showPayrollDetails.employee.position} • {showPayrollDetails.employee.department} • 
+                  <span className="employee-id">{showPayrollDetails.employee._id}</span>
                 </p>
               </div>
 
@@ -432,7 +410,12 @@ export default function Payroll() {
                 <FiDownload /> Download Payslip
               </button>
               {showPayrollDetails.status === "pending" && (
-                <button className="process-btn">Process Payment</button>
+                <button 
+                  className="process-btn"
+                  onClick={() => handleProcessPayment(showPayrollDetails._id)}
+                >
+                  Process Payment
+                </button>
               )}
             </div>
           </div>

@@ -7,6 +7,9 @@ const app = express();
 const userRoutes = require("./routes/userRoutes")
 const jobRoutes = require("./routes/jobRoutes");
 const leaveRequestRoutes = require("./routes/leaveRequestRoutes");
+const attendanceRoutes = require("./routes/attendanceRoutes");
+const departmentRoutes = require("./routes/departmentRoutes");
+const payrollRoutes = require("./routes/payrollRoutes");
 const path = require("path");
 const fs = require("fs-extra");
 
@@ -39,6 +42,9 @@ app.use("/api/certificates", require("./routes/certificateRoutes"));
 app.use("/api/job-applications", require("./routes/jobApplicationRoutes"));
 app.use("/api/jobs", jobRoutes);
 app.use("/api/leave-requests", leaveRequestRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/payroll", payrollRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
