@@ -1688,37 +1688,42 @@
         .request-actions {
           display: flex;
           gap: 8px;
+          margin-top: 12px;
+          justify-content: flex-end;
 
           button {
-            flex: 1;
             display: flex;
-            justify-content: center;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             padding: 6px 12px;
-            border-radius: 6px;
-            border: none;
-            font-size: 0.8rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
 
             &.approve-btn {
-              background-color: rgba(46, 204, 113, 0.1);
-              color: #2ecc71;
+              background-color: #22c55e;
+              color: white;
+              border: none;
 
               &:hover {
-                background-color: rgba(46, 204, 113, 0.2);
+                background-color: #16a34a;
               }
             }
 
             &.reject-btn {
-              background-color: rgba(231, 76, 60, 0.1);
-              color: #e74c3c;
+              background-color: #ef4444;
+              color: white;
+              border: none;
 
               &:hover {
-                background-color: rgba(231, 76, 60, 0.2);
+                background-color: #dc2626;
               }
+            }
+
+            svg {
+              font-size: 1rem;
             }
           }
         }

@@ -20,7 +20,7 @@ router.post('/', authenticate, async (req, res) => {
 // Get all leave requests (for HR/Admin)
 router.get('/', authenticate, async (req, res) => {
   try {
-    const { status, employeeId } = req.query;
+    const { status, employeeId, limit } = req.query;
     let query = {};
     
     if (status) {
@@ -31,10 +31,15 @@ router.get('/', authenticate, async (req, res) => {
       query.employeeId = employeeId;
     }
     
-    const leaveRequests = await LeaveRequest.find(query)
+    let leaveRequests = await LeaveRequest.find(query)
       .populate('employeeId', 'name email')
       .populate('approvedBy', 'name email')
       .sort({ createdAt: -1 });
+      
+    // Apply limit if specified
+    if (limit) {
+      leaveRequests = leaveRequests.slice(0, parseInt(limit));
+    }
       
     res.json(leaveRequests);
   } catch (error) {
@@ -57,18 +62,36 @@ router.get('/my-requests', authenticate, async (req, res) => {
 // Update leave request status (for HR/Admin)
 router.patch('/:id/status', authenticate, async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, rejectionReason } = req.body;
+    
+    // Check if user has permission to approve/reject requests
+    if (!req.user.role || !['admin', 'hr', 'manager'].includes(req.user.role)) {
+      return res.status(403).json({ message: 'Unauthorized to update leave request status' });
+    }
+    
     const leaveRequest = await LeaveRequest.findById(req.params.id);
     
     if (!leaveRequest) {
       return res.status(404).json({ message: 'Leave request not found' });
     }
     
+    // Update the leave request
     leaveRequest.status = status;
     leaveRequest.approvedBy = req.user._id;
+    leaveRequest.approvedDate = new Date();
+    
+    if (status === 'rejected' && rejectionReason) {
+      leaveRequest.rejectionReason = rejectionReason;
+    }
+    
     await leaveRequest.save();
     
-    res.json(leaveRequest);
+    // Populate the updated request with employee and approver info
+    const updatedRequest = await LeaveRequest.findById(leaveRequest._id)
+      .populate('employeeId', 'name email')
+      .populate('approvedBy', 'name email');
+    
+    res.json(updatedRequest);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

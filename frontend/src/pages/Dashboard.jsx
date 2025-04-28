@@ -48,49 +48,25 @@ export default function Dashboard() {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        // Mock data for now, would be replaced with actual API call
-        // const response = await axios.get("http://localhost:5000/api/leave-requests?limit=3&status=pending", {
-        //   headers: {
-        //     Authorization: `Bearer ${token}`
-        //   }
-        // });
-        // setLeaveRequests(response.data);
-        
-        // Mock data for leave requests
-        const mockLeaveRequests = [
-          { 
-            id: 1, 
-            employee: 'Michael Brown', 
-            department: 'Engineering',
-            type: 'Sick Leave', 
-            from: '2023-06-15', 
-            to: '2023-06-16', 
-            status: 'pending',
-            avatar: 'https://ui-avatars.com/api/?name=MB&background=3498db&color=fff'
-          },
-          { 
-            id: 2, 
-            employee: 'Lisa Wang', 
-            department: 'HR',
-            type: 'Personal Leave', 
-            from: '2023-06-18', 
-            to: '2023-06-19', 
-            status: 'pending',
-            avatar: 'https://ui-avatars.com/api/?name=LW&background=1abc9c&color=fff'
-          },
-          { 
-            id: 3, 
-            employee: 'Emily Davis', 
-            department: 'Marketing',
-            type: 'Vacation', 
-            from: '2023-06-20', 
-            to: '2023-06-25', 
-            status: 'approved',
-            avatar: 'https://ui-avatars.com/api/?name=ED&background=e74c3c&color=fff'
+        const response = await axios.get("http://localhost:5000/api/leave-requests?limit=3&status=pending", {
+          headers: {
+            Authorization: `Bearer ${token}`
           }
-        ];
+        });
         
-        setLeaveRequests(mockLeaveRequests);
+        // Transform the data to match the expected format
+        const formattedRequests = response.data.map(request => ({
+          id: request._id,
+          employeeName: request.employeeId?.name || 'Unknown Employee',
+          department: request.department || 'Unknown Department',
+          type: request.type,
+          startDate: request.startDate,
+          endDate: request.endDate,
+          status: request.status,
+          avatar: `https://ui-avatars.com/api/?name=${request.employeeId?.name?.charAt(0) || 'U'}&background=3498db&color=fff`
+        }));
+        
+        setLeaveRequests(formattedRequests);
         setLoadingRequests(false);
       } catch (error) {
         console.error("Error fetching leave requests:", error);
@@ -128,6 +104,93 @@ export default function Dashboard() {
   const handleNavigateToProfile = () => navigate('/profile');
   const handleNavigateToLeaveRequests = () => navigate('/leave-requests');
 
+  // Function to handle approving a leave request
+  const handleApproveRequest = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+
+      const response = await axios.patch(
+        `http://localhost:5000/api/leave-requests/${id}/status`,
+        { status: 'approved' },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.data) {
+        // Update local state with the new data
+        setLeaveRequests(prev => 
+          prev.map(request => 
+            request.id === id ? {
+              ...request,
+              status: 'approved',
+              approvedBy: response.data.approvedBy?.name || 'Unknown',
+              approvedDate: response.data.approvedDate
+            } : request
+          )
+        );
+        alert('Leave request approved successfully');
+      }
+    } catch (error) {
+      console.error("Error approving leave request:", error);
+      alert(error.response?.data?.message || 'Failed to approve leave request');
+    }
+  };
+
+  // Function to handle rejecting a leave request
+  const handleRejectRequest = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("No token found");
+        return;
+      }
+
+      const reason = window.prompt("Please enter the reason for rejection:");
+      if (!reason) {
+        return; // User cancelled the prompt
+      }
+
+      const response = await axios.patch(
+        `http://localhost:5000/api/leave-requests/${id}/status`,
+        { 
+          status: 'rejected',
+          rejectionReason: reason
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.data) {
+        // Update local state with the new data
+        setLeaveRequests(prev => 
+          prev.map(request => 
+            request.id === id ? {
+              ...request,
+              status: 'rejected',
+              rejectionReason: reason,
+              approvedBy: response.data.approvedBy?.name || 'Unknown',
+              approvedDate: response.data.approvedDate
+            } : request
+          )
+        );
+        alert('Leave request rejected successfully');
+      }
+    } catch (error) {
+      console.error("Error rejecting leave request:", error);
+      alert(error.response?.data?.message || 'Failed to reject leave request');
+    }
+  };
+
   // Function to render status badge
   const renderStatusBadge = (status) => {
     switch(status) {
@@ -137,48 +200,6 @@ export default function Dashboard() {
         return <span className="status-badge rejected"><FiXCircle /> Rejected</span>;
       default:
         return <span className="status-badge pending"><FiClock /> Pending</span>;
-    }
-  };
-
-  // Function to handle approving a leave request
-  const handleApproveRequest = async (id) => {
-    try {
-      // Would be replaced with actual API call
-      // await axios.put(`http://localhost:5000/api/leave-requests/${id}/approve`, {}, {
-      //   headers: {
-      //     Authorization: `Bearer ${localStorage.getItem("token")}`
-      //   }
-      // });
-      
-      // Update local state
-      setLeaveRequests(prev => 
-        prev.map(request => 
-          request.id === id ? {...request, status: 'approved'} : request
-        )
-      );
-    } catch (error) {
-      console.error("Error approving leave request:", error);
-    }
-  };
-
-  // Function to handle rejecting a leave request
-  const handleRejectRequest = async (id) => {
-    try {
-      // Would be replaced with actual API call
-      // await axios.put(`http://localhost:5000/api/leave-requests/${id}/reject`, {}, {
-      //   headers: {
-      //     Authorization: `Bearer ${localStorage.getItem("token")}`
-      //   }
-      // });
-      
-      // Update local state
-      setLeaveRequests(prev => 
-        prev.map(request => 
-          request.id === id ? {...request, status: 'rejected'} : request
-        )
-      );
-    } catch (error) {
-      console.error("Error rejecting leave request:", error);
     }
   };
 
@@ -290,11 +311,11 @@ export default function Dashboard() {
                     <div className="employee-info">
                       <img 
                         src={request.avatar} 
-                        alt={request.employee} 
+                        alt={request.employeeName} 
                         className="employee-avatar"
                       />
                       <div>
-                        <h3 className="employee-name">{request.employee}</h3>
+                        <h3 className="employee-name">{request.employeeName}</h3>
                         <p className="employee-department">{request.department}</p>
                       </div>
                     </div>
@@ -308,17 +329,25 @@ export default function Dashboard() {
                     </div>
                     <div className="request-dates">
                       <span className="label">Dates:</span>
-                      <span className="value">{request.from} to {request.to}</span>
+                      <span className="value">{request.startDate} to {request.endDate}</span>
                     </div>
                   </div>
                   
-                  {request.status === 'pending' && (
-                    <button 
-                      className="view-details-btn"
-                      onClick={() => handleNavigateToLeaveRequests()}
-                    >
-                      View Details
-                    </button>
+                  {request.status === 'pending' && hasPermission(['admin', 'hr', 'manager']) && (
+                    <div className="request-actions">
+                      <button 
+                        className="approve-btn"
+                        onClick={() => handleApproveRequest(request.id)}
+                      >
+                        <FiCheckCircle /> Approve
+                      </button>
+                      <button 
+                        className="reject-btn"
+                        onClick={() => handleRejectRequest(request.id)}
+                      >
+                        <FiXCircle /> Reject
+                      </button>
+                    </div>
                   )}
                 </li>
               ))}

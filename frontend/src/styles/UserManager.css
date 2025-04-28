@@ -160,7 +160,7 @@
 
 .user-form input:focus,
 .user-form select:focus {
-  border-color: #3498db;
+  border-color: var(--accent-primary);
   outline: none;
   box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
 }
@@ -195,7 +195,7 @@
 }
 
 .btn-primary {
-  background-color: #3498db;
+  background-color: var(--accent-primary);
   color: white;
 }
 

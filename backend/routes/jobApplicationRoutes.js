@@ -120,7 +120,7 @@ router.put("/:id/status", authenticate, async (req, res) => {
 
     const { status } = req.body;
     const application = await JobApplication.findById(req.params.id)
-      .populate("jobId", "title");
+      .populate("jobId", "title department");
 
     if (!application) {
       return res.status(404).json({ message: "Application not found" });
@@ -133,6 +133,11 @@ router.put("/:id/status", authenticate, async (req, res) => {
     // If the status is changed to "Shortlisted", send an email
     if (status === "Shortlisted") {
       try {
+        // Ensure we have the job title before sending the email
+        if (!application.jobId || !application.jobId.title) {
+          throw new Error("Job title not found");
+        }
+
         await sendShortlistEmail(
           application.email,
           `${application.firstName} ${application.lastName}`,

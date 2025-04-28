@@ -2,25 +2,11 @@ const nodemailer = require('nodemailer');
 
 // Enhanced email validation function
 const isValidEmail = (email) => {
+  // Basic email format validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     throw new Error('Invalid email address format');
   }
-
-  // Check for common typos in domain names
-  const domain = email.split('@')[1].toLowerCase();
-  const commonTypos = {
-    'horzion-tech.tn': 'horizon-tech.tn',
-    'horizontech.tn': 'horizon-tech.tn',
-    'horizon-tech.com': 'horizon-tech.tn',
-    // Add more common typos as needed
-  };
-
-  // If there's a typo, log it but don't throw an error
-  if (commonTypos[domain]) {
-    console.log(`Note: Domain "${domain}" appears to have a typo. Did you mean "${commonTypos[domain]}"?`);
-  }
-
   return true;
 };
 
@@ -54,12 +40,12 @@ const sendShortlistEmail = async (candidateEmail, candidateName, jobTitle) => {
   try {
     console.log('Attempting to send shortlist email to:', candidateEmail);
     
-    // Validate email with enhanced error handling
+    // Basic email format validation
     try {
       isValidEmail(candidateEmail);
     } catch (error) {
       console.error('Email validation error:', error.message);
-      throw error;
+      throw new Error('Invalid email address format');
     }
 
     const mailOptions = {
@@ -111,10 +97,11 @@ const sendShortlistEmail = async (candidateEmail, candidateName, jobTitle) => {
       responseCode: error.responseCode
     });
     
+    // More specific error messages
     if (error.code === 'EENVELOPE') {
-      throw new Error('Invalid email address or recipient not found');
+      throw new Error('Failed to send email. Please check the email address and try again.');
     } else if (error.code === 'EAUTH') {
-      throw new Error('Email service authentication failed. Please check your email credentials.');
+      throw new Error('Email service configuration error. Please contact support.');
     } else if (error.code === 'ECONNECTION') {
       throw new Error('Could not connect to email service. Please check your internet connection.');
     } else {

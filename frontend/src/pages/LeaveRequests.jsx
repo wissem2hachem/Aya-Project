@@ -79,7 +79,15 @@ export default function LeaveRequests() {
           : '/api/leave-requests/my-requests';  // Get only user's requests for regular employees
 
         const response = await api.get(endpoint);
-        setLeaveRequests(response.data);
+        
+        // Transform the data to include employee names
+        const formattedRequests = response.data.map(request => ({
+          ...request,
+          employeeName: request.employeeId?.name || 'Unknown Employee',
+          department: request.employeeId?.department || 'Unknown Department'
+        }));
+        
+        setLeaveRequests(formattedRequests);
       } catch (err) {
         console.error('Error fetching leave requests:', err);
         if (err.response?.status === 401) {
@@ -154,20 +162,32 @@ export default function LeaveRequests() {
   };
 
   // Function to handle status changes
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (id, newStatus, rejectionReason) => {
     if (!hasPermission(['admin', 'hr', 'manager'])) return;
     
     try {
       setError(null);
-      const response = await api.patch(`/api/leave-requests/${id}/status`, { status: newStatus });
+      const response = await api.patch(`/api/leave-requests/${id}/status`, { 
+        status: newStatus,
+        ...(rejectionReason && { rejectionReason })
+      });
       
-      setLeaveRequests(prevRequests =>
-        prevRequests.map(request =>
-          request._id === id ? response.data : request
-        )
-      );
-      setShowRequestDetails(null);
-      setSuccessMessage('Leave request status updated successfully');
+      if (response.data) {
+        setLeaveRequests(prevRequests =>
+          prevRequests.map(request =>
+            request._id === id ? {
+              ...request,
+              status: newStatus,
+              rejectionReason: rejectionReason || request.rejectionReason,
+              approvedBy: response.data.approvedBy?.name || 'Unknown',
+              approvedDate: response.data.approvedDate
+            } : request
+          )
+        );
+        setShowRequestDetails(null);
+        setSuccessMessage('Leave request status updated successfully');
+        alert(`Leave request ${newStatus} successfully`);
+      }
     } catch (err) {
       console.error('Error updating leave request status:', err);
       if (err.response?.status === 401) {
@@ -175,6 +195,7 @@ export default function LeaveRequests() {
       } else {
         setError(err.response?.data?.message || 'Failed to update leave request status');
       }
+      alert(err.response?.data?.message || 'Failed to update leave request status');
     }
   };
 
@@ -462,7 +483,7 @@ export default function LeaveRequests() {
                 const statusInfo = getStatusInfo(request.status);
                 
                 return (
-                  <tr key={request.id}>
+                  <tr key={request._id}>
                     {hasPermission(['admin', 'hr', 'manager']) && <td>{request.employeeName}</td>}
                     <td>{request.department}</td>
                     <td>{request.type}</td>
@@ -493,7 +514,7 @@ export default function LeaveRequests() {
                           <>
                             <button 
                               className="approve-button" 
-                              onClick={() => handleStatusChange(request.id, "approved")}
+                              onClick={() => handleStatusChange(request._id, "approved")}
                             >
                               <FiCheck />
                             </button>
@@ -501,7 +522,7 @@ export default function LeaveRequests() {
                               className="reject-button" 
                               onClick={() => {
                                 const reason = window.prompt("Reason for rejection:");
-                                if (reason) handleStatusChange(request.id, "rejected", reason);
+                                if (reason) handleStatusChange(request._id, "rejected", reason);
                               }}
                             >
                               <FiX />

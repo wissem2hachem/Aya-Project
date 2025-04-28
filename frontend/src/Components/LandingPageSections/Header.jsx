@@ -46,7 +46,7 @@ function Header({ theme, toggleTheme }) {
           </div>
         </div>
         <div className="landing__hero-image">
-          <img src="/images/illustration.png" alt="HR Management Illustration" className="hero-image" />
+          {/* <img src="/images/illustration.png" alt="HR Management Illustration" className="hero-image" /> */}
         </div>
       </div>
     </header>
