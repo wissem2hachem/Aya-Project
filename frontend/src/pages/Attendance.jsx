@@ -42,6 +42,7 @@ export default function Attendance() {
   });
 
   // Format date for display
+  ///
   const formatDate = (date) => {
     return date.toLocaleDateString('en-US', { 
       weekday: 'long', 
