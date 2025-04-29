@@ -25,27 +25,27 @@ export default function Sidebar({ isOpen, onClose }) {
         const token = localStorage.getItem("token");
         if (!token) return;
         
-        // Mock data for now - would be replaced with actual API call
-        // const response = await axios.get("http://localhost:5000/api/leave-requests/pending/count", {
-        //   headers: {
-        //     Authorization: `Bearer ${token}`
-        //   }
-        // });
-        // setPendingLeaveRequests(response.data.count);
+        const response = await axios.get("http://localhost:5000/api/leave-requests/pending/count", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
         
-        // Simulating API response with mock data
-        setTimeout(() => {
-          setPendingLeaveRequests(3);
-        }, 500);
+        if (response.data && typeof response.data.count === 'number') {
+          setPendingLeaveRequests(response.data.count);
+        } else {
+          setPendingLeaveRequests(0);
+        }
       } catch (error) {
         console.error("Error fetching pending leave requests:", error);
+        setPendingLeaveRequests(0);
       }
     };
     
     fetchPendingLeaveRequests();
     
-    // Set up polling for real-time updates (every 5 minutes)
-    const intervalId = setInterval(fetchPendingLeaveRequests, 5 * 60 * 1000);
+    // Set up polling for real-time updates (every 30 seconds)
+    const intervalId = setInterval(fetchPendingLeaveRequests, 30 * 1000);
     
     return () => clearInterval(intervalId);
   }, []);
@@ -64,21 +64,21 @@ export default function Sidebar({ isOpen, onClose }) {
       icon: MdPeople,
       path: "/employees",
       ariaLabel: "Navigate to Employees",
-      requiredRoles: ['admin', 'hr', 'manager'],
+      requiredRoles: ['admin'],
     },
     {
       title: "Attendance",
       icon: FaUserCheck,
       path: "/attendance",
       ariaLabel: "Navigate to Attendance",
-      requiredRoles: ['admin', 'hr', 'manager'],
+      requiredRoles: ['admin'],
     },
     {
       title: "Leave Requests",
       icon: MdEventNote,
       path: "/leave-requests",
       ariaLabel: "Navigate to Leave Requests",
-      badge: pendingLeaveRequests > 0 && hasPermission(['admin', 'hr']) ? pendingLeaveRequests : null,
+      badge: pendingLeaveRequests > 0 ? pendingLeaveRequests : null,
       requiredRoles: null, // all authenticated users can access
     },
     {
@@ -86,28 +86,28 @@ export default function Sidebar({ isOpen, onClose }) {
       icon: MdOutlineAttachMoney,
       path: "/payroll",
       ariaLabel: "Navigate to Payroll",
-      requiredRoles: ['admin', 'hr'],
+      requiredRoles: ['admin'],
     },
     {
       title: "Recruitment",
       icon: FaUserTie,
       path: "/recruitment",
       ariaLabel: "Navigate to Recruitment",
-      requiredRoles: ['admin', 'hr', 'manager'],
+      requiredRoles: ['admin'],
     },
     {
       title: "Manage Jobs",
       icon: MdWork,
       path: "/manage-jobs",
       ariaLabel: "Navigate to Manage Jobs",
-      requiredRoles: ['admin', 'hr', 'manager'],
+      requiredRoles: ['admin'],
     },
     {
       title: "User Manager",
       icon: AiFillSetting,
       path: "/usermanager",
       ariaLabel: "Navigate to User Manager",
-      requiredRoles: ['admin', 'manager'],
+      requiredRoles: ['admin'],
     },
   ];
   
@@ -120,7 +120,11 @@ export default function Sidebar({ isOpen, onClose }) {
     <nav className={`sidebar ${isOpen ? 'is-active' : ''}`} aria-label="Main navigation">
       <div className="brand">
         <h2>
-          HR<span>Manager</span>
+          {userRole === 'admin' ? (
+            <>Admin<span>Panel</span></>
+          ) : (
+            <>Employee<span>Portal</span></>
+          )}
         </h2>
       </div>
       <ul className="links">

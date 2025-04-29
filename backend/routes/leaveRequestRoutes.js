@@ -118,4 +118,14 @@ router.delete('/:id', authenticate, async (req, res) => {
   }
 });
 
+// Get count of pending leave requests
+router.get("/pending/count", authenticate, async (req, res) => {
+  try {
+    const count = await LeaveRequest.countDocuments({ status: 'pending' });
+    res.status(200).json({ count });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router; 

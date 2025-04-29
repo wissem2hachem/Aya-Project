@@ -1,132 +1,416 @@
-import React, { useState } from "react";
-import { FiPlus, FiSearch, FiEdit2, FiTrash2 } from "react-icons/fi";
-import EmployeeForm from "../Components/EmployeeForm";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FiUser, FiEdit, FiTrash2, FiSearch, FiFilter, FiMail, FiPhone, FiCalendar, FiCheck, FiX } from "react-icons/fi";
 import "./Employees.scss";
 
 export default function Employees() {
+  const navigate = useNavigate();
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [leaveRequests, setLeaveRequests] = useState([]);
   const [editingEmployee, setEditingEmployee] = useState(null);
-  const [employees, setEmployees] = useState([
-    { id: 1, name: "Ali Ben Salah", age: 28, email: "ali@example.com", phone: "+1 234 567 890", occupation: "Software Engineer", department: "IT", joinDate: "2022-01-15", salary: "75000", address: "123 Tech Street, Silicon Valley", status: "active" },
-    { id: 2, name: "Sarah Johnson", age: 32, email: "sarah@example.com", phone: "+1 987 654 321", occupation: "HR Manager", department: "Human Resources", joinDate: "2021-06-10", salary: "85000", address: "456 HR Avenue, Business District", status: "active" },
-    { id: 3, name: "Michael Brown", age: 45, email: "michael@example.com", phone: "+1 567 890 123", occupation: "Project Manager", department: "Management", joinDate: "2020-03-22", salary: "95000", address: "789 Management Road, Corporate Park", status: "active" },
-    { id: 4, name: "Emily Davis", age: 26, email: "emily@example.com", phone: "+1 345 678 901", occupation: "Marketing Specialist", department: "Marketing", joinDate: "2022-04-05", salary: "70000", address: "567 Creative Lane, Market Square", status: "active" },
-    { id: 5, name: "David Wilson", age: 38, email: "david@example.com", phone: "+1 890 123 456", occupation: "Financial Analyst", department: "Finance", joinDate: "2021-11-18", salary: "80000", address: "890 Money Street, Financial District", status: "active" }
-  ]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const filteredEmployees = employees.filter(employee =>
-    employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    employee.occupation.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch employees, departments, and leave requests
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const token = localStorage.getItem("token");
+        console.log("Token:", token);
 
-  const handleAddEmployee = () => {
-    setEditingEmployee(null);
-    setIsFormOpen(true);
-  };
+        if (!token) {
+          setError("Authentication token not found");
+          return;
+        }
 
-  const handleEditEmployee = (employee) => {
-    setEditingEmployee(employee);
-    setIsFormOpen(true);
-  };
+        // Fetch employees (users with accounts)
+        console.log("Fetching employees...");
+        try {
+          const employeesResponse = await axios.get("http://localhost:5000/api/users", {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log("Raw employees response:", employeesResponse);
+          console.log("Employees data:", employeesResponse.data);
+          setEmployees(employeesResponse.data);
+        } catch (error) {
+          console.error("Error fetching employees:", error);
+          console.error("Error response:", error.response);
+          setError("Failed to fetch employees: " + (error.response?.data?.message || error.message));
+        }
 
-  const handleDeleteEmployee = (id) => {
-    if (window.confirm('Are you sure you want to delete this employee?')) {
-      setEmployees(prevEmployees => prevEmployees.filter(emp => emp.id !== id));
+        // Fetch departments
+        console.log("Fetching departments...");
+        try {
+          const departmentsResponse = await axios.get("http://localhost:5000/api/departments", {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log("Departments response:", departmentsResponse.data);
+          setDepartments(departmentsResponse.data);
+        } catch (error) {
+          console.error("Error fetching departments:", error);
+          console.error("Error response:", error.response);
+          setError("Failed to fetch departments: " + (error.response?.data?.message || error.message));
+        }
+
+        // Fetch leave requests
+        console.log("Fetching leave requests...");
+        try {
+          const leaveRequestsResponse = await axios.get("http://localhost:5000/api/leave-requests", {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          console.log("Leave requests response:", leaveRequestsResponse.data);
+          setLeaveRequests(leaveRequestsResponse.data);
+        } catch (error) {
+          console.error("Error fetching leave requests:", error);
+          console.error("Error response:", error.response);
+          setError("Failed to fetch leave requests: " + (error.response?.data?.message || error.message));
+        }
+      } catch (error) {
+        console.error("Error in fetchData:", error);
+        setError(error.response?.data?.message || "Failed to fetch data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Handle employee deletion
+  const handleDelete = async (employeeId) => {
+    if (!window.confirm("Are you sure you want to delete this employee?")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found");
+        return;
+      }
+
+      await axios.delete(`http://localhost:5000/api/users/${employeeId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Remove the deleted employee from the list
+      setEmployees(prevEmployees => 
+        prevEmployees.filter(emp => emp._id !== employeeId)
+      );
+
+      alert("Employee deleted successfully");
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      setError(error.response?.data?.message || "Failed to delete employee");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleFormSubmit = (formData) => {
-    if (editingEmployee) {
-      // Update existing employee
-      setEmployees(prevEmployees => 
-        prevEmployees.map(emp => 
-          emp.id === editingEmployee.id ? { ...formData, id: emp.id } : emp
+  // Get leave request status for an employee
+  const getEmployeeLeaveStatus = (employeeId) => {
+    const employeeRequests = leaveRequests.filter(request => 
+      request.employeeId._id === employeeId || request.employeeId === employeeId
+    );
+    
+    if (employeeRequests.length === 0) return null;
+    
+    const pendingRequests = employeeRequests.filter(request => request.status === 'pending');
+    const approvedRequests = employeeRequests.filter(request => request.status === 'approved');
+    
+    return {
+      total: employeeRequests.length,
+      pending: pendingRequests.length,
+      approved: approvedRequests.length
+    };
+  };
+
+  // Filter employees based on search term and department
+  const filteredEmployees = employees.filter(employee => {
+    const matchesSearch = employee.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         employee.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         employee.position?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesDepartment = !selectedDepartment || employee.department === selectedDepartment;
+    return matchesSearch && matchesDepartment;
+  });
+
+  console.log("Current employees state:", employees);
+  console.log("Filtered employees:", filteredEmployees);
+
+  // Handle employee edit
+  const handleEdit = (employee) => {
+    setEditingEmployee(employee);
+    setIsEditModalOpen(true);
+  };
+
+  // Handle employee update
+  const handleUpdate = async (updatedData) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found");
+        return;
+      }
+
+      await axios.put(`http://localhost:5000/api/users/${editingEmployee._id}`, updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Update the employee in the list
+      setEmployees(prevEmployees =>
+        prevEmployees.map(emp =>
+          emp._id === editingEmployee._id ? { ...emp, ...updatedData } : emp
         )
       );
-    } else {
-      // Add new employee
-      const newEmployee = {
-        ...formData,
-        id: employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1
-      };
-      setEmployees(prevEmployees => [...prevEmployees, newEmployee]);
+
+      setIsEditModalOpen(false);
+      setEditingEmployee(null);
+      alert("Employee updated successfully");
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      setError(error.response?.data?.message || "Failed to update employee");
+    } finally {
+      setLoading(false);
     }
-    setIsFormOpen(false);
   };
+
+  if (loading) {
+    return <div className="loading-message">Loading employees...</div>;
+  }
 
   return (
     <div className="employees-page">
-      <div className="page-header">
+      <header className="page-header">
         <h1>Employees</h1>
-        <div className="actions">
-          <div className="search-container">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Search employees..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <button className="add-button" onClick={handleAddEmployee}>
-            <FiPlus />
-            Add Employee
-          </button>
+      </header>
+
+      {error && (
+        <div className="error-message">
+          <p>{error}</p>
+        </div>
+      )}
+
+      <div className="filters-section">
+        <div className="search-container">
+          <FiSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+        </div>
+
+        <div className="filter-container">
+          <FiFilter className="filter-icon" />
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className="department-filter"
+          >
+            <option value="">All Departments</option>
+            {departments.map(dept => (
+              <option key={dept._id} value={dept._id}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      <div className="employee-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Age</th>
-              <th>Job Title</th>
-              <th>Department</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredEmployees.map((employee) => (
-              <tr key={employee.id}>
-                <td>{employee.name}</td>
-                <td>{employee.age}</td>
-                <td>{employee.occupation}</td>
-                <td>{employee.department}</td>
-                <td>{employee.email}</td>
-                <td>
-                  <span className={`status-badge ${employee.status}`}>
-                    {employee.status === 'active' ? 'Active' : 
-                     employee.status === 'on-leave' ? 'On Leave' : 'Terminated'}
-                  </span>
-                </td>
-                <td>
-                  <div className="employee-actions">
-                    <button className="edit" onClick={() => handleEditEmployee(employee)}>
-                      <FiEdit2 />
-                    </button>
-                    <button className="delete" onClick={() => handleDeleteEmployee(employee.id)}>
-                      <FiTrash2 />
-                    </button>
+      <div className="employees-grid">
+        {filteredEmployees.length === 0 ? (
+          <div className="empty-state">
+            <p>No employees found</p>
+          </div>
+        ) : (
+          filteredEmployees.map(employee => {
+            const leaveStatus = getEmployeeLeaveStatus(employee._id);
+            console.log("Rendering employee:", employee);
+            
+            return (
+              <div key={employee._id} className="employee-card">
+                <div className="employee-header">
+                  <img 
+                    src={employee.avatar || `https://ui-avatars.com/api/?name=${employee.name?.replace(' ', '+')}&background=3498db&color=fff`}
+                    alt={employee.name || 'Employee'}
+                    className="employee-avatar"
+                  />
+                  <div className="employee-info">
+                    <h3>{employee.name || 'Unnamed Employee'}</h3>
+                    <p className="employee-position">{employee.position || 'No Position'}</p>
+                    <p className="employee-department">
+                      {departments.find(dept => dept._id === employee.department)?.name || 'No Department'}
+                    </p>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+
+                <div className="employee-details">
+                  <div className="detail-item">
+                    <FiUser className="icon" />
+                    <span>{employee.role || 'No Role'}</span>
+                  </div>
+                  <div className="detail-item">
+                    <FiMail className="icon" />
+                    <span>{employee.email || 'No Email'}</span>
+                  </div>
+                  {employee.phone && (
+                    <div className="detail-item">
+                      <FiPhone className="icon" />
+                      <span>{employee.phone}</span>
+                    </div>
+                  )}
+                  {leaveStatus && (
+                    <div className="detail-item leave-status">
+                      <FiCalendar className="icon" />
+                      <span>
+                        {leaveStatus.pending > 0 ? `${leaveStatus.pending} pending` : ''}
+                        {leaveStatus.pending > 0 && leaveStatus.approved > 0 ? ' • ' : ''}
+                        {leaveStatus.approved > 0 ? `${leaveStatus.approved} approved` : ''}
+                      </span>
+                    </div>
+                  )}
+                  {employee.profileCompletion && (
+                    <div className="detail-item profile-completion">
+                      <FiCheck className="icon" />
+                      <span>Profile {employee.profileCompletion}% Complete</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="employee-actions">
+                  <button
+                    className="edit-btn"
+                    onClick={() => handleEdit(employee)}
+                  >
+                    <FiEdit /> Edit
+                  </button>
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(employee._id)}
+                  >
+                    <FiTrash2 /> Delete
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
 
-      {/* Employee Form Modal */}
-      <EmployeeForm 
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={handleFormSubmit}
-        initialData={editingEmployee}
-      />
+      {/* Edit Modal */}
+      {isEditModalOpen && editingEmployee && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit Employee</h2>
+              <button className="close-button" onClick={() => setIsEditModalOpen(false)}>
+                <FiX />
+              </button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              const updatedData = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                department: formData.get('department'),
+                position: formData.get('position'),
+                role: formData.get('role')
+              };
+              handleUpdate(updatedData);
+            }}>
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  defaultValue={editingEmployee.name}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  defaultValue={editingEmployee.email}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  defaultValue={editingEmployee.phone}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Department</label>
+                <select name="department" defaultValue={editingEmployee.department}>
+                  <option value="">Select Department</option>
+                  {departments.map(dept => (
+                    <option key={dept._id} value={dept._id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Position</label>
+                <input
+                  type="text"
+                  name="position"
+                  defaultValue={editingEmployee.position}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Role</label>
+                <select name="role" defaultValue={editingEmployee.role}>
+                  <option value="employee">Employee</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              
+              <div className="modal-actions">
+                <button type="button" className="cancel-button" onClick={() => setIsEditModalOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="save-button">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

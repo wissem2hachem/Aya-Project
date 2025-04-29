@@ -81,11 +81,20 @@ export default function LeaveRequests() {
         const response = await api.get(endpoint);
         
         // Transform the data to include employee names
-        const formattedRequests = response.data.map(request => ({
-          ...request,
-          employeeName: request.employeeId?.name || 'Unknown Employee',
-          department: request.employeeId?.department || 'Unknown Department'
-        }));
+        const formattedRequests = response.data.map(request => {
+          // Calculate duration in days (inclusive)
+          const start = new Date(request.startDate);
+          const end = new Date(request.endDate);
+          const duration = !isNaN(start) && !isNaN(end)
+            ? Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1)
+            : "-";
+          return {
+            ...request,
+            employeeName: request.employeeId?.name || 'Unknown Employee',
+            department: request.employeeId?.department || 'Unknown Department',
+            duration: typeof duration === "number" ? `${duration} day${duration > 1 ? "s" : ""}` : "-"
+          };
+        });
         
         setLeaveRequests(formattedRequests);
       } catch (err) {
@@ -333,10 +342,13 @@ export default function LeaveRequests() {
 
   // Add a function to get all requests for the current user
   const getUserRequests = () => {
-    if (!currentUser?.employeeId) return [];
-    return leaveRequests.filter(request => 
-      String(request.employeeId) === String(currentUser.employeeId)
-    );
+    if (!currentUser?._id) return [];
+    return leaveRequests.filter(request => {
+      const reqEmpId = typeof request.employeeId === 'object' && request.employeeId !== null
+        ? request.employeeId._id
+        : request.employeeId;
+      return String(reqEmpId) === String(currentUser._id);
+    });
   };
 
   // Add a summary of the user's requests
@@ -715,7 +727,13 @@ export default function LeaveRequests() {
             <div className="modal-body">
               <div className="detail-row">
                 <span className="label">Employee:</span>
-                <span className="value">{showRequestDetails.employeeName} ({showRequestDetails.employeeId})</span>
+                <span className="value">
+                  {showRequestDetails.employeeName} (
+                  {typeof showRequestDetails.employeeId === 'object' && showRequestDetails.employeeId !== null
+                    ? showRequestDetails.employeeId.name || showRequestDetails.employeeId.email || showRequestDetails.employeeId._id
+                    : showRequestDetails.employeeId}
+                  )
+                </span>
               </div>
               <div className="detail-row">
                 <span className="label">Department:</span>
