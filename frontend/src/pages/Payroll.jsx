@@ -1,32 +1,23 @@
 import React, { useState, useEffect } from "react";
-import { 
-  FiSearch, 
-  FiDownload, 
-  FiCalendar, 
-  FiFilter, 
-  FiEye,
-  FiChevronLeft, 
-  FiChevronRight,
-  FiDollarSign,
-  FiFileText,
-  FiCreditCard,
-  FiPieChart
-} from "react-icons/fi";
-import axios from 'axios';
-import "./Payroll.scss";
+import employeeService from "../services/employeeService";
+import { getToken, isAuthenticated, login } from "../services/authService";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import "../pages/Payroll.css";
 
-// Add axios instance configuration
+// Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: 'http://localhost:5000/api',
+  withCredentials: true,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   }
 });
 
 // Add request interceptor to include token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -37,116 +28,261 @@ api.interceptors.request.use(
   }
 );
 
-export default function Payroll() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [filterDepartment, setFilterDepartment] = useState("all");
-  const [showPayrollDetails, setShowPayrollDetails] = useState(null);
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
-  const [payrollData, setPayrollData] = useState([]);
+const Payroll = () => {
+  const navigate = useNavigate();
+  const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Fetch payroll data
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [payrollData, setPayrollData] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    salary: 0
+  });
+
   useEffect(() => {
-    const fetchPayrollData = async () => {
+    const fetchData = async () => {
+      if (!isAuthenticated()) {
+        setError("Please log in to access payroll data");
+        setLoading(false);
+        navigate('/login');
+        return;
+      }
+
       try {
         setLoading(true);
-        const response = await api.get(`/api/payroll?month=${currentMonth.toISOString()}`);
-        setPayrollData(response.data);
+        const [employeesData, payrollData] = await Promise.all([
+          api.get('/users'),
+          api.get(`/payroll?month=${new Date().toISOString()}`)
+        ]);
+
+        console.log('Raw employees data:', employeesData.data);
+
+        // Transform the data to match our needs
+        const transformedData = employeesData.data.map(emp => {
+          console.log('Processing employee:', emp);
+          
+          // Handle both User and Employee model structures
+          const firstName = emp.firstName || (emp.name ? emp.name.split(' ')[0] : '');
+          const lastName = emp.lastName || (emp.name ? emp.name.split(' ').slice(1).join(' ') : '');
+          
+          const fullName = firstName || lastName ? `${firstName} ${lastName}`.trim() : emp.email;
+          
+          console.log('Processed name:', { firstName, lastName, fullName });
+          
+          return {
+            ...emp,
+            fullName: fullName,
+            position: emp.position || 'Not specified',
+            department: emp.department || 'Not specified',
+            salary: emp.salary || 0,
+            status: emp.status || 'active'
+          };
+        });
+
+        console.log('Transformed data:', transformedData);
+        setEmployees(transformedData);
+        setPayrollData(payrollData.data);
         setError(null);
       } catch (err) {
-        setError('Failed to fetch payroll data');
-        console.error('Error fetching payroll data:', err);
+        console.error('Error fetching data:', err);
+        if (err.response && err.response.status === 401) {
+          setError("Please log in to access payroll data");
+          navigate('/login');
+        } else {
+          setError("Failed to fetch data. Please try again later.");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPayrollData();
-  }, [currentMonth]);
+    fetchData();
+  }, [navigate]);
 
-  // Filter payroll data based on search and filter
-  const filteredPayroll = payrollData.filter(record => {
-    const matchesSearch = 
-      record.employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employee._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.employee.position.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = 
-      filterDepartment === "all" || record.employee.department === filterDepartment;
-    
-    return matchesSearch && matchesFilter;
-  });
+  const handleGeneratePayroll = async () => {
+    if (!selectedMonth || !selectedYear) {
+      alert("Please select both month and year");
+      return;
+    }
 
-  // Calculate payroll statistics
-  const calculatePayrollStats = () => {
-    const totalPaid = payrollData
-      .filter(record => record.status === "processed")
-      .reduce((sum, record) => sum + record.netPay, 0);
-    
-    const totalPending = payrollData
-      .filter(record => record.status === "pending")
-      .reduce((sum, record) => sum + record.netPay, 0);
-    
-    const totalEmployees = payrollData.length;
-    const processedEmployees = payrollData.filter(record => record.status === "processed").length;
-    
-    return {
-      totalPaid,
-      totalPending,
-      totalEmployees,
-      processedEmployees
-    };
-  };
-
-  const stats = calculatePayrollStats();
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  };
-
-  // Format month
-  const formatMonth = (date) => {
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  };
-
-  // Handle month navigation
-  const navigateMonth = (direction) => {
-    const newDate = new Date(currentMonth);
-    newDate.setMonth(newDate.getMonth() + direction);
-    setCurrentMonth(newDate);
-  };
-
-  // Get unique departments for filter
-  const departments = [...new Set(payrollData.map(record => record.employee.department))];
-
-  // Handle filter change
-  const handleFilterChange = (department) => {
-    setFilterDepartment(department);
-    setIsFilterDropdownOpen(false);
-  };
-
-  // Handle process payment
-  const handleProcessPayment = async (payrollId) => {
     try {
-      await api.put(`/api/payroll/${payrollId}`, {
-        status: 'processed',
-        paymentDate: new Date().toISOString()
+      setIsGenerating(true);
+      const response = await api.post('/payroll/generate', {
+        month: new Date(selectedYear, selectedMonth - 1).toISOString()
       });
       
-      // Refresh payroll data
-      const response = await api.get(`/api/payroll?month=${currentMonth.toISOString()}`);
       setPayrollData(response.data);
-      setShowPayrollDetails(null);
+      alert("Payroll generated successfully!");
     } catch (err) {
-      console.error('Error processing payment:', err);
+      console.error('Error generating payroll:', err);
+      if (err.response && err.response.status === 401) {
+        alert("Please log in to generate payroll");
+      } else {
+        alert("Failed to generate payroll. Please try again.");
+      }
+    } finally {
+      setIsGenerating(false);
     }
   };
 
+  const handleDownloadPayroll = async (employeeId) => {
+    try {
+      const response = await api.get(`/payroll/${employeeId}`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `payslip-${employeeId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Error downloading payslip:', err);
+      if (err.response && err.response.status === 401) {
+        alert("Please log in to download payslip");
+      } else {
+        alert("Failed to download payslip. Please try again.");
+      }
+    }
+  };
+
+  const handlePrintPayroll = (employeeId) => {
+    const payroll = payrollData.find(p => p.employee._id === employeeId);
+    if (!payroll) {
+      alert("Payroll data not found");
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Payslip - ${payroll.employee.name}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .details { margin-bottom: 20px; }
+            .section { margin-bottom: 15px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+            .total { font-weight: bold; margin-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Payslip</h1>
+            <p>${new Date(payroll.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+          </div>
+          <div class="details">
+            <p><strong>Employee:</strong> ${payroll.employee.name}</p>
+            <p><strong>Department:</strong> ${payroll.employee.department}</p>
+            <p><strong>Position:</strong> ${payroll.employee.position}</p>
+          </div>
+          <div class="section">
+            <h3>Earnings</h3>
+            <div class="row">
+              <span>Basic Salary:</span>
+              <span>${formatCurrency(payroll.basicSalary)}</span>
+            </div>
+            <div class="row">
+              <span>Overtime Pay:</span>
+              <span>${formatCurrency(payroll.overtimePay)}</span>
+            </div>
+            <div class="row">
+              <span>Bonuses:</span>
+              <span>${formatCurrency(payroll.bonuses)}</span>
+            </div>
+          </div>
+          <div class="section">
+            <h3>Deductions</h3>
+            <div class="row">
+              <span>Tax:</span>
+              <span>${formatCurrency(payroll.taxDeductions)}</span>
+            </div>
+            <div class="row">
+              <span>Insurance:</span>
+              <span>${formatCurrency(payroll.insuranceDeductions)}</span>
+            </div>
+            <div class="row">
+              <span>Other Deductions:</span>
+              <span>${formatCurrency(payroll.otherDeductions)}</span>
+            </div>
+          </div>
+          <div class="total">
+            <div class="row">
+              <span>Net Pay:</span>
+              <span>${formatCurrency(payroll.netPay)}</span>
+            </div>
+          </div>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const handleEditClick = (employee) => {
+    setEditingEmployee(employee);
+    setEditFormData({
+      salary: employee.salary || 0
+    });
+    setIsEditing(true);
+  };
+
+  const handleUpdatePayroll = async () => {
+    try {
+      // Update the user's salary
+      const response = await api.put(`/users/${editingEmployee._id}`, {
+        salary: editFormData.salary
+      });
+      
+      const updatedEmployees = employees.map(emp => 
+        emp._id === editingEmployee._id ? { ...emp, salary: editFormData.salary } : emp
+      );
+      setEmployees(updatedEmployees);
+      setIsEditing(false);
+      setEditingEmployee(null);
+      alert("Salary updated successfully!");
+    } catch (err) {
+      console.error('Error updating salary:', err);
+      alert("Failed to update salary. Please try again.");
+    }
+  };
+
+  const handleEditFormChange = (e) => {
+    const { name, value } = e.target;
+    setEditFormData(prev => ({
+      ...prev,
+      [name]: parseFloat(value) || 0
+    }));
+  };
+
+  const filteredEmployees = employees.filter((employee) => {
+    const matchesSearch = employee.fullName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    const matchesStatus = !selectedStatus || employee.status === selectedStatus;
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading) {
-    return <div className="loading">Loading payroll data...</div>;
+    return <div className="loading">Loading employees...</div>;
   }
 
   if (error) {
@@ -154,273 +290,163 @@ export default function Payroll() {
   }
 
   return (
-    <div className="payroll-page">
-      <header className="page-header">
+    <div className="payroll-container">
+      <div className="payroll-header">
         <h1>Payroll Management</h1>
-        <div className="month-navigator">
-          <button className="nav-button" onClick={() => navigateMonth(-1)}>
-            <FiChevronLeft />
+        <div className="payroll-actions">
+          <button
+            className="generate-btn"
+            onClick={handleGeneratePayroll}
+            disabled={isGenerating}
+          >
+            {isGenerating ? "Generating..." : "Generate Payroll"}
           </button>
-          <div className="current-month">
-            <FiCalendar />
-            <span>{formatMonth(currentMonth)}</span>
-          </div>
-          <button className="nav-button" onClick={() => navigateMonth(1)}>
-            <FiChevronRight />
-          </button>
-        </div>
-      </header>
-
-      <div className="payroll-stats">
-        <div className="stat-card">
-          <div className="stat-icon">
-            <FiDollarSign />
-          </div>
-          <div className="stat-content">
-            <h3>Total Paid</h3>
-            <p>{formatCurrency(stats.totalPaid)}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">
-            <FiCreditCard />
-          </div>
-          <div className="stat-content">
-            <h3>Pending Payments</h3>
-            <p>{formatCurrency(stats.totalPending)}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">
-            <FiFileText />
-          </div>
-          <div className="stat-content">
-            <h3>Processed Payslips</h3>
-            <p>{stats.processedEmployees} / {stats.totalEmployees}</p>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon">
-            <FiPieChart />
-          </div>
-          <div className="stat-content">
-            <h3>Average Salary</h3>
-            <p>{formatCurrency(payrollData.reduce((sum, record) => sum + record.netPay, 0) / payrollData.length)}</p>
-          </div>
         </div>
       </div>
 
-      <div className="actions-bar">
-        <div className="search-container">
-          <FiSearch />
+      <div className="payroll-filters">
+        <div className="search-box">
           <input
             type="text"
-            placeholder="Search employee, ID, position..."
+            placeholder="Search by employee name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        
-        <div className="action-buttons">
-          <div className="filter-dropdown">
-            <button 
-              className="filter-button"
-              onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-            >
-              <FiFilter />
-              <span>Department</span>
-            </button>
-            <div className={`dropdown-content ${isFilterDropdownOpen ? 'show' : ''}`}>
-              <button 
-                className={filterDepartment === "all" ? "active" : ""} 
-                onClick={() => handleFilterChange("all")}
-              >
-                All Departments
-              </button>
-              {departments.map(dept => (
-                <button
-                  key={dept}
-                  className={filterDepartment === dept ? "active" : ""}
-                  onClick={() => handleFilterChange(dept)}
-                >
-                  {dept}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <button className="export-button">
-            <FiDownload />
-            <span>Export</span>
-          </button>
+        <div className="filter-group">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            <option value="">All Months</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+              <option key={month} value={month}>
+                {new Date(2000, month - 1).toLocaleString("default", {
+                  month: "long",
+                })}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+          >
+            <option value="">All Years</option>
+            {Array.from(
+              { length: 5 },
+              (_, i) => new Date().getFullYear() - i
+            ).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="on_leave">On Leave</option>
+          </select>
         </div>
       </div>
 
-      <div className="payroll-table">
-        <table>
+      <div className="payroll-table-container">
+        <table className="payroll-table">
           <thead>
             <tr>
               <th>Employee</th>
               <th>Position</th>
               <th>Department</th>
               <th>Basic Salary</th>
-              <th>Overtime</th>
-              <th>Deductions</th>
-              <th>Net Pay</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredPayroll.map((record) => (
-              <tr key={record._id}>
-                <td className="employee-cell">
-                  <span className="employee-name">{record.employee.name}</span>
-                  <span className="employee-id">{record.employee._id}</span>
-                </td>
-                <td>{record.employee.position}</td>
-                <td>{record.employee.department}</td>
-                <td>{formatCurrency(record.basicSalary)}</td>
-                <td>{formatCurrency(record.overtimePay)}</td>
-                <td>{formatCurrency(record.taxDeductions + record.insuranceDeductions + record.otherDeductions)}</td>
-                <td className="net-pay">{formatCurrency(record.netPay)}</td>
-                <td>
-                  <span className={`status-badge ${record.status}`}>
-                    {record.status === "processed" ? "Processed" : "Pending"}
-                  </span>
-                </td>
-                <td>
-                  <div className="record-actions">
-                    <button 
-                      className="view-button" 
-                      onClick={() => setShowPayrollDetails(record)}
-                    >
-                      <FiEye />
-                    </button>
-                    <button className="download-button">
-                      <FiDownload />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {filteredEmployees.map((employee) => {
+              const payroll = payrollData.find(p => p.employee._id === employee._id);
+              return (
+                <tr key={employee._id}>
+                  <td>
+                    <div className="employee-info">
+                      <span className="name">{employee.name || employee.fullName}</span>
+                    </div>
+                  </td>
+                  <td>{employee.position}</td>
+                  <td>{employee.department}</td>
+                  <td>{formatCurrency(employee.salary)}</td>
+                  <td>
+                    <span className={`status-badge ${employee.status}`}>
+                      {employee.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="action-btn edit-btn"
+                        onClick={() => handleEditClick(employee)}
+                        title="Edit"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        className="action-btn"
+                        onClick={() => handleDownloadPayroll(employee._id)}
+                        title="Download"
+                        disabled={!payroll}
+                      >
+                        <i className="fas fa-download"></i>
+                      </button>
+                      <button
+                        className="action-btn"
+                        onClick={() => handlePrintPayroll(employee._id)}
+                        title="Print"
+                        disabled={!payroll}
+                      >
+                        <i className="fas fa-print"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Payroll Details Modal */}
-      {showPayrollDetails && (
-        <div className="payroll-details-modal">
+      {/* Edit Payroll Modal */}
+      {isEditing && (
+        <div className="modal">
           <div className="modal-content">
-            <div className="modal-header">
-              <h3>Payroll Details - {formatMonth(currentMonth)}</h3>
-              <button 
-                className="close-button" 
-                onClick={() => setShowPayrollDetails(null)}
-              >
-                &times;
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="employee-info">
-                <h4>{showPayrollDetails.employee.name}</h4>
-                <p>
-                  {showPayrollDetails.employee.position} • {showPayrollDetails.employee.department} • 
-                  <span className="employee-id">{showPayrollDetails.employee._id}</span>
-                </p>
+            <h2>Edit Salary</h2>
+            <div className="edit-form">
+              <div className="form-group">
+                <label>Salary</label>
+                <input
+                  type="number"
+                  name="salary"
+                  value={editFormData.salary}
+                  onChange={handleEditFormChange}
+                  placeholder="Enter new salary"
+                />
               </div>
-
-              <div className="payslip-section">
-                <h5>Earnings</h5>
-                <div className="payslip-row">
-                  <span className="label">Basic Salary</span>
-                  <span className="value">{formatCurrency(showPayrollDetails.basicSalary)}</span>
-                </div>
-                <div className="payslip-row">
-                  <span className="label">Overtime Pay</span>
-                  <span className="value">{formatCurrency(showPayrollDetails.overtimePay)}</span>
-                </div>
-                <div className="payslip-row">
-                  <span className="label">Bonuses</span>
-                  <span className="value">{formatCurrency(showPayrollDetails.bonuses)}</span>
-                </div>
-                <div className="payslip-row total">
-                  <span className="label">Total Earnings</span>
-                  <span className="value">
-                    {formatCurrency(showPayrollDetails.basicSalary + showPayrollDetails.overtimePay + showPayrollDetails.bonuses)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="payslip-section">
-                <h5>Deductions</h5>
-                <div className="payslip-row">
-                  <span className="label">Tax</span>
-                  <span className="value">{formatCurrency(showPayrollDetails.taxDeductions)}</span>
-                </div>
-                <div className="payslip-row">
-                  <span className="label">Insurance</span>
-                  <span className="value">{formatCurrency(showPayrollDetails.insuranceDeductions)}</span>
-                </div>
-                <div className="payslip-row">
-                  <span className="label">Other Deductions</span>
-                  <span className="value">{formatCurrency(showPayrollDetails.otherDeductions)}</span>
-                </div>
-                <div className="payslip-row total">
-                  <span className="label">Total Deductions</span>
-                  <span className="value">
-                    {formatCurrency(showPayrollDetails.taxDeductions + showPayrollDetails.insuranceDeductions + showPayrollDetails.otherDeductions)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="payslip-section">
-                <div className="payslip-row grand-total">
-                  <span className="label">Net Pay</span>
-                  <span className="value">{formatCurrency(showPayrollDetails.netPay)}</span>
-                </div>
-              </div>
-
-              <div className="payment-info">
-                <h5>Payment Information</h5>
-                <div className="detail-row">
-                  <span className="label">Payment Method:</span>
-                  <span className="value">{showPayrollDetails.paymentMethod}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Account:</span>
-                  <span className="value">{showPayrollDetails.accountNumber}</span>
-                </div>
-                {showPayrollDetails.status === "processed" && (
-                  <div className="detail-row">
-                    <span className="label">Payment Date:</span>
-                    <span className="value">{new Date(showPayrollDetails.paymentDate).toLocaleDateString()}</span>
-                  </div>
-                )}
-                <div className="detail-row">
-                  <span className="label">Status:</span>
-                  <span className={`value status-${showPayrollDetails.status}`}>
-                    {showPayrollDetails.status === "processed" ? "Processed" : "Pending"}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="download-btn">
-                <FiDownload /> Download Payslip
-              </button>
-              {showPayrollDetails.status === "pending" && (
-                <button 
-                  className="process-btn"
-                  onClick={() => handleProcessPayment(showPayrollDetails._id)}
-                >
-                  Process Payment
+              <div className="modal-actions">
+                <button className="cancel-btn" onClick={() => setIsEditing(false)}>
+                  Cancel
                 </button>
-              )}
+                <button className="update-btn" onClick={handleUpdatePayroll}>
+                  Update Salary
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
     </div>
   );
-}
+};
+
+export default Payroll; 

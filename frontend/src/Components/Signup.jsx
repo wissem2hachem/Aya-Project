@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "../styles/auth.css";
+import "../styles/login.css";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -47,9 +47,8 @@ const Signup = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">CollabHub</div>
-          <h1 className="auth-title">Create Account</h1>
-          <p className="auth-subtitle">Join thousands of teams worldwide</p>
+          <h1 className="auth-title">Create Your Account</h1>
+          <p className="auth-subtitle">Join our HR management platform</p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}

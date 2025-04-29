@@ -1,24 +1,17 @@
 import React, { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  IoMdNotificationsOutline,
-  IoMdNotifications,
-  IoMdMenu,
-  IoMdClose,
-  IoMdMoon,
-  IoMdSunny,
-} from "react-icons/io";
-import { FaSearch, FaRegEnvelope, FaEnvelope, FaUserCircle, FaCog } from "react-icons/fa";
+import { IoMdMenu, IoMdClose, IoMdMoon, IoMdSunny } from "react-icons/io";
+import { FaUserCircle, FaCog } from "react-icons/fa";
 import { MdLogout } from "react-icons/md";
 import "../styles/navbar.scss";
 import LogoutConfirmation from "./LogoutConfirmation";
 import ThemeContext from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import Notifications from "./Notifications";
+import Mail from "./Mail";
 
 export default function Navbar({ onMenuClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
-  const [hasNotifications, setHasNotifications] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
@@ -115,30 +108,12 @@ export default function Navbar({ onMenuClick }) {
 
           {/* Notifications */}
           <div className="navbar-item">
-            <button
-              className="icon-button notification-button"
-              aria-label={`Notifications ${hasNotifications ? '(has unread)' : ''}`}
-              onClick={() => setHasNotifications(!hasNotifications)}
-            >
-              {hasNotifications ? (
-                <IoMdNotifications />
-              ) : (
-                <IoMdNotificationsOutline />
-              )}
-              {hasNotifications && <span className="badge" aria-hidden="true"></span>}
-            </button>
+            <Notifications />
           </div>
 
           {/* Messages */}
           <div className="navbar-item">
-            <button
-              className="icon-button message-button"
-              aria-label={`Messages ${hasUnreadMessages ? '(has unread)' : ''}`}
-              onClick={() => setHasUnreadMessages(!hasUnreadMessages)}
-            >
-              {hasUnreadMessages ? <FaEnvelope /> : <FaRegEnvelope />}
-              {hasUnreadMessages && <span className="badge" aria-hidden="true"></span>}
-            </button>
+            <Mail />
           </div>
 
           {/* Profile Dropdown */}

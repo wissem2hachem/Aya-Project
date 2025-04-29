@@ -12,6 +12,7 @@ const departmentRoutes = require("./routes/departmentRoutes");
 const payrollRoutes = require("./routes/payrollRoutes");
 const path = require("path");
 const fs = require("fs-extra");
+const employeeRoutes = require('./routes/employeeRoutes');
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -45,6 +46,13 @@ app.use("/api/leave-requests", leaveRequestRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/payroll", payrollRoutes);
+app.use('/api/employees', employeeRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!', error: err.message });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

@@ -51,9 +51,8 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">CollabHub</div>
-          <h1 className="auth-title">Welcome Back</h1>
-          <p className="auth-subtitle">Sign in to continue to your account</p>
+          <h1 className="auth-title">Welcome to HR Management</h1>
+          <p className="auth-subtitle">Sign in to access your dashboard</p>
         </div>
 
         {error && <div className="auth-error">{error}</div>}

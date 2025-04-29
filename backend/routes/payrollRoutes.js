@@ -8,6 +8,10 @@ const { authenticate } = require('../middleware/authMiddleware');
 router.get('/', authenticate, async (req, res) => {
   try {
     const { month } = req.query;
+    if (!month) {
+      return res.status(400).json({ message: 'Month parameter is required' });
+    }
+
     const startDate = new Date(month);
     const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
 
@@ -19,6 +23,53 @@ router.get('/', authenticate, async (req, res) => {
     }).populate('employee', 'name email department position');
 
     res.json(payrollRecords);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Generate payroll for all active employees
+router.post('/generate', authenticate, async (req, res) => {
+  try {
+    const { month } = req.body;
+    if (!month) {
+      return res.status(400).json({ message: 'Month is required' });
+    }
+
+    // Get all active employees
+    const activeEmployees = await User.find({ status: 'active' });
+    
+    // Generate payroll for each employee
+    const payrollPromises = activeEmployees.map(async (employee) => {
+      // Check if payroll already exists for this employee and month
+      const existingPayroll = await Payroll.findOne({
+        employee: employee._id,
+        month: new Date(month)
+      });
+
+      if (existingPayroll) {
+        return existingPayroll;
+      }
+
+      // Calculate tax based on salary (simplified calculation)
+      const taxRate = 0.2; // 20% tax rate
+      const taxDeductions = employee.salary * taxRate;
+
+      // Create new payroll record
+      const payroll = new Payroll({
+        employee: employee._id,
+        month: new Date(month),
+        basicSalary: employee.salary,
+        taxDeductions,
+        insuranceDeductions: 100, // Fixed insurance deduction
+        status: 'pending'
+      });
+
+      return payroll.save();
+    });
+
+    const payrollRecords = await Promise.all(payrollPromises);
+    res.status(201).json(payrollRecords);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -88,7 +139,6 @@ router.put('/:id', authenticate, async (req, res) => {
       taxDeductions,
       insuranceDeductions,
       otherDeductions,
-      netPay,
       status,
       paymentDate,
       paymentMethod,
@@ -100,17 +150,17 @@ router.put('/:id', authenticate, async (req, res) => {
       return res.status(404).json({ message: 'Payroll record not found' });
     }
 
-    payroll.basicSalary = basicSalary || payroll.basicSalary;
-    payroll.overtimePay = overtimePay || payroll.overtimePay;
-    payroll.bonuses = bonuses || payroll.bonuses;
-    payroll.taxDeductions = taxDeductions || payroll.taxDeductions;
-    payroll.insuranceDeductions = insuranceDeductions || payroll.insuranceDeductions;
-    payroll.otherDeductions = otherDeductions || payroll.otherDeductions;
-    payroll.netPay = netPay || payroll.netPay;
-    payroll.status = status || payroll.status;
-    payroll.paymentDate = paymentDate || payroll.paymentDate;
-    payroll.paymentMethod = paymentMethod || payroll.paymentMethod;
-    payroll.accountNumber = accountNumber || payroll.accountNumber;
+    // Only allow updating specific fields
+    if (basicSalary !== undefined) payroll.basicSalary = basicSalary;
+    if (overtimePay !== undefined) payroll.overtimePay = overtimePay;
+    if (bonuses !== undefined) payroll.bonuses = bonuses;
+    if (taxDeductions !== undefined) payroll.taxDeductions = taxDeductions;
+    if (insuranceDeductions !== undefined) payroll.insuranceDeductions = insuranceDeductions;
+    if (otherDeductions !== undefined) payroll.otherDeductions = otherDeductions;
+    if (status) payroll.status = status;
+    if (paymentDate) payroll.paymentDate = paymentDate;
+    if (paymentMethod) payroll.paymentMethod = paymentMethod;
+    if (accountNumber) payroll.accountNumber = accountNumber;
 
     const updatedPayroll = await payroll.save();
     res.json(updatedPayroll);
@@ -126,6 +176,12 @@ router.delete('/:id', authenticate, async (req, res) => {
     if (!payroll) {
       return res.status(404).json({ message: 'Payroll record not found' });
     }
+
+    // Only allow deletion of pending payrolls
+    if (payroll.status === 'processed') {
+      return res.status(400).json({ message: 'Cannot delete processed payroll records' });
+    }
+
     await payroll.remove();
     res.json({ message: 'Payroll record deleted successfully' });
   } catch (error) {
