@@ -10,7 +10,7 @@ function Header({ theme, toggleTheme }) {
           <span className="logo-text">HRHub</span>
         </div>
         <ul className="landing__nav-list">
-          <li><a href="#features">Features</a></li>
+          <li><a href="#features">Hiring Hub</a></li>
           <li><a href="#our-story">Our Story</a></li>
         </ul>
         <div className="landing__nav-buttons">
@@ -35,7 +35,6 @@ function Header({ theme, toggleTheme }) {
             Organize candidates, compliance documents, performance reviews, and employee records in one place.
           </p>
           <div className="landing__cta">
-            <Link to="/signup" className="btn btn--primary btn--large">Get Started Free</Link>
             <div className="landing__trust-badges">
               <span>Trusted by 10,000+ HR professionals</span>
               <div className="landing__ratings">
