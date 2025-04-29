@@ -82,6 +82,11 @@ const ManageJobs = () => {
     }
   };
 
+  const handleEdit = (jobId) => {
+    // Navigate to the edit page for the specific job
+    navigate(`/edit-job/${jobId}`);
+  };
+
   if (loading) return <div className="loading">Loading jobs...</div>;
   if (error) return <div className="error">{error}</div>;
 
@@ -129,7 +134,7 @@ const ManageJobs = () => {
                 <td>
                   <button
                     className="edit-button"
-                    onClick={() => navigate(`/edit-job/${job._id}`)}
+                    onClick={() => handleEdit(job._id)} // Fixed Edit button
                   >
                     Edit
                   </button>
@@ -149,4 +154,4 @@ const ManageJobs = () => {
   );
 };
 
-export default ManageJobs; 
+export default ManageJobs;

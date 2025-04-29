@@ -3,30 +3,9 @@ import { Link } from "react-router-dom";
 
 function FeaturesSection() {
   const features = [
-    {
-      title: "Smart Document Management",
-      desc: "Organize employee records, contracts, and compliance documents with easy access and commenting features.",
-      icon: "📁",
-      path: "/features/file-management"
-    },
-    {
-      title: "Performance Review System",
-      desc: "Create consistent performance evaluations and manage the review process efficiently.",
-      icon: "✅",
-      path: "/features/review-management"
-    },
-    {
-      title: "Real-time Recruitment Tracking",
-      desc: "24/7 access to candidate pipelines and hiring status with live updates for all stakeholders.",
-      icon: "📊",
-      path: "/features/status-tracking"
-    },
-    {
-      title: "Automated HR Workflows",
-      desc: "Streamline approvals for time-off requests, expense reports, and onboarding documentation.",
-      icon: "⚡",
-      path: "/features/automated-approvals"
-    },
+  
+  
+   
     {
       title: "Job Posting Management",
       desc: "Create, publish, and manage job openings while tracking applicants through the hiring process.",

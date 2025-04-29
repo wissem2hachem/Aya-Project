@@ -43,18 +43,18 @@ function JobSeekersSection() {
               </div>
             </div>
           ))}
-          
-          <div className="job-seekers-cta">
-            <Link to="/candidate-signup" className="btn btn--primary">Create Free Account</Link>
-            <Link to="/browse-jobs" className="btn btn--secondary">Browse Jobs</Link>
-          </div>
-          
-          <div className="job-seekers-trust">
-            <p className="metric">72% of users find employment within 45 days</p>
-            <p className="testimonial">"I found my dream job in just 3 weeks!" - Sarah K., Marketing Manager</p>
-          </div>
         </div>
-        
+
+        <div className="job-seekers-cta">
+          <Link to="/candidate-signup" className="btn btn--primary">Create Free Account</Link>
+          <Link to="/browse-jobs" className="btn btn--secondary">Browse Jobs</Link>
+        </div>
+
+        <div className="job-seekers-trust">
+          <p className="metric">72% of users find employment within 45 days</p>
+          <p className="testimonial">"I found my dream job in just 3 weeks!" - Sarah K., Marketing Manager</p>
+        </div>
+
         <div className="job-seekers-image">
           <img src="/images/job-seeker-app.png" alt="Job Seeker Dashboard" />
         </div>
@@ -63,4 +63,4 @@ function JobSeekersSection() {
   );
 }
 
-export default JobSeekersSection; 
+export default JobSeekersSection;

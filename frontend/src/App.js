@@ -22,6 +22,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ThemeContext from "./context/ThemeContext";
 import "./styles/auth-loading.scss";
 import CreateJob from './Components/features/CreateJob';
+import EditJob from './Components/features/EditJob';
 import ManageJobs from './Components/admin/ManageJobs';
 import Recruitment from './Components/Recruitment';
 import ThankYouPage from './Components/features/ThankYouPage';
@@ -56,6 +57,7 @@ function App() {
             <Route path="/leave-requests" element={<LeaveRequests />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/create-job" element={<CreateJob />} />
+            <Route path="/edit-job/:id" element={<EditJob />} />
             
             {/* HR, Manager, and Admin routes */}
             <Route element={<RouteGuard requiredRoles={['admin', 'hr', 'manager']} />}>

@@ -6,7 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs-extra");
 const mongoose = require("mongoose");
-const Job = require("../models/Job");
+const Job = require("../models/job");
 const { sendShortlistEmail } = require("../services/emailService");
 
 // Ensure uploads directory exists
