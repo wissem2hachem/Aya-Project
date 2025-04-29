@@ -106,16 +106,6 @@ export default function Navbar({ onMenuClick }) {
             </button>
           </div>
 
-          {/* Notifications */}
-          <div className="navbar-item">
-            <Notifications />
-          </div>
-
-          {/* Messages */}
-          <div className="navbar-item">
-            <Mail />
-          </div>
-
           {/* Profile Dropdown */}
           <div className="navbar-item user-profile-dropdown">
             <div
