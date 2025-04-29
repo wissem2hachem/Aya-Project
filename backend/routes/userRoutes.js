@@ -2,9 +2,10 @@ const express = require("express");
 const User = require("../models/User");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
+const { authenticate, authorizeUser } = require("../middleware/authMiddleware");
 
 // Get All Users (READ)
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.status(200).json(users);
@@ -47,8 +48,13 @@ router.get("/profile/me", async (req, res) => {
 });
 
 // Create New User (CREATE)
-router.post("/create", async (req, res) => {
+router.post("/create", authenticate, async (req, res) => {
   try {
+    // Check if user has admin role
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Only administrators can create users" });
+    }
+
     const { name, email, password, role } = req.body;
 
     // Check if user exists

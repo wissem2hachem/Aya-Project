@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FiUser, FiEdit, FiTrash2, FiSearch, FiFilter, FiMail, FiPhone, FiCalendar, FiCheck } from "react-icons/fi";
+import { FiUser, FiEdit, FiTrash2, FiSearch, FiFilter, FiMail, FiPhone, FiCalendar, FiCheck, FiX } from "react-icons/fi";
 import "./Employees.scss";
 
 export default function Employees() {
@@ -13,6 +13,8 @@ export default function Employees() {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [departments, setDepartments] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
+  const [editingEmployee, setEditingEmployee] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch employees, departments, and leave requests
   useEffect(() => {
@@ -151,6 +153,46 @@ export default function Employees() {
   console.log("Current employees state:", employees);
   console.log("Filtered employees:", filteredEmployees);
 
+  // Handle employee edit
+  const handleEdit = (employee) => {
+    setEditingEmployee(employee);
+    setIsEditModalOpen(true);
+  };
+
+  // Handle employee update
+  const handleUpdate = async (updatedData) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Authentication token not found");
+        return;
+      }
+
+      await axios.put(`http://localhost:5000/api/users/${editingEmployee._id}`, updatedData, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Update the employee in the list
+      setEmployees(prevEmployees =>
+        prevEmployees.map(emp =>
+          emp._id === editingEmployee._id ? { ...emp, ...updatedData } : emp
+        )
+      );
+
+      setIsEditModalOpen(false);
+      setEditingEmployee(null);
+      alert("Employee updated successfully");
+    } catch (error) {
+      console.error("Error updating employee:", error);
+      setError(error.response?.data?.message || "Failed to update employee");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return <div className="loading-message">Loading employees...</div>;
   }
@@ -259,7 +301,7 @@ export default function Employees() {
                 <div className="employee-actions">
                   <button
                     className="edit-btn"
-                    onClick={() => navigate(`/employees/${employee._id}`)}
+                    onClick={() => handleEdit(employee)}
                   >
                     <FiEdit /> Edit
                   </button>
@@ -275,6 +317,100 @@ export default function Employees() {
           })
         )}
       </div>
+
+      {/* Edit Modal */}
+      {isEditModalOpen && editingEmployee && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit Employee</h2>
+              <button className="close-button" onClick={() => setIsEditModalOpen(false)}>
+                <FiX />
+              </button>
+            </div>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              const updatedData = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                department: formData.get('department'),
+                position: formData.get('position'),
+                role: formData.get('role')
+              };
+              handleUpdate(updatedData);
+            }}>
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  defaultValue={editingEmployee.name}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  defaultValue={editingEmployee.email}
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  defaultValue={editingEmployee.phone}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Department</label>
+                <select name="department" defaultValue={editingEmployee.department}>
+                  <option value="">Select Department</option>
+                  {departments.map(dept => (
+                    <option key={dept._id} value={dept._id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Position</label>
+                <input
+                  type="text"
+                  name="position"
+                  defaultValue={editingEmployee.position}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Role</label>
+                <select name="role" defaultValue={editingEmployee.role}>
+                  <option value="employee">Employee</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              
+              <div className="modal-actions">
+                <button type="button" className="cancel-button" onClick={() => setIsEditModalOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="save-button">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -24,22 +24,10 @@ const UserManager = () => {
         "Access their attendance records"
       ]
     },
-    manager: {
-      title: "Manager",
-      description: "Team leader with additional permissions",
+    admin: {
+      title: "Admin",
+      description: "Full administrative access to all functions",
       permissions: [
-        "All Employee permissions",
-        "View/manage their team's attendance",
-        "Approve team leave requests",
-        "View team performance metrics",
-        "Create team reports"
-      ]
-    },
-    hr: {
-      title: "HR Admin",
-      description: "Full administrative access to HR functions",
-      permissions: [
-        "All Manager permissions",
         "Manage all users and roles",
         "Access all employee records",
         "Handle all leave requests",
@@ -56,7 +44,12 @@ const UserManager = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(API_URL);
+      const token = localStorage.getItem('token');
+      const res = await axios.get(API_URL, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setUsers(res.data);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -66,16 +59,31 @@ const UserManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       if (editId) {
-        await axios.put(`${API_URL}/${editId}`, form);
+        await axios.put(`${API_URL}/${editId}`, form, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
       } else {
-        await axios.post(`${API_URL}/create`, form);
+        await axios.post(`${API_URL}/create`, form, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
       }
       setForm({ name: "", email: "", password: "", role: "employee" });
       setEditId(null);
       fetchUsers();
     } catch (err) {
       console.error("Error submitting form:", err);
+      alert(err.response?.data?.message || "Error creating/updating user");
     }
   };
 
@@ -86,19 +94,41 @@ const UserManager = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_URL}/${id}`);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      await axios.delete(`${API_URL}/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       fetchUsers();
     } catch (err) {
       console.error("Error deleting user:", err);
+      alert(err.response?.data?.message || "Error deleting user");
     }
   };
 
   const handleRoleChange = async (id, newRole) => {
     try {
-      await axios.put(`${API_URL}/${id}`, { role: newRole });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      await axios.put(`${API_URL}/${id}`, { role: newRole }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       fetchUsers();
     } catch (err) {
       console.error("Error updating user role:", err);
+      alert(err.response?.data?.message || "Error updating user role");
     }
   };
 
@@ -188,8 +218,7 @@ const UserManager = () => {
                 required
               >
                 <option value="employee">Employee</option>
-                <option value="manager">Manager</option>
-                <option value="hr">HR</option>
+                <option value="admin">Admin</option>
               </select>
               <div className="role-description">
                 {form.role && roleDefinitions[form.role] ? 
@@ -227,8 +256,7 @@ const UserManager = () => {
               >
                 <option value="all">All Roles</option>
                 <option value="employee">Employee</option>
-                <option value="manager">Manager</option>
-                <option value="hr">HR</option>
+                <option value="admin">Admin</option>
               </select>
             </div>
           </div>
@@ -255,25 +283,18 @@ const UserManager = () => {
                       className={`role-select ${user.role || "employee"}`}
                     >
                       <option value="employee">Employee</option>
-                      <option value="manager">Manager</option>
-                      <option value="hr">HR</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </td>
                   <td>
                     <div className="access-badges">
-                      {user.role === "hr" && (
+                      {user.role === "admin" && (
                         <>
                           <span className="access-badge users">Users</span>
                           <span className="access-badge employees">Employees</span>
                           <span className="access-badge attendance">Attendance</span>
                           <span className="access-badge payroll">Payroll</span>
                           <span className="access-badge recruitment">Recruitment</span>
-                        </>
-                      )}
-                      {user.role === "manager" && (
-                        <>
-                          <span className="access-badge employees">Employees</span>
-                          <span className="access-badge attendance">Attendance</span>
                         </>
                       )}
                       {(user.role === "employee" || !user.role) && (

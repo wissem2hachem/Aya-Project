@@ -13,6 +13,7 @@ import { MdLogout } from "react-icons/md";
 import "../styles/navbar.scss";
 import LogoutConfirmation from "./LogoutConfirmation";
 import ThemeContext from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar({ onMenuClick }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,8 +24,27 @@ export default function Navbar({ onMenuClick }) {
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const { userRole, currentUser } = useAuth();
 
-  const avatar = "https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff";
+  // Function to get user initials
+  const getUserInitials = (name) => {
+    if (!name) return '';
+    return name.split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Get the appropriate avatar
+  const getAvatarUrl = () => {
+    if (userRole === 'admin') {
+      return "https://ui-avatars.com/api/?name=AD&background=0D8ABC&color=fff";
+    }
+    // For employees, use their initials
+    const initials = getUserInitials(currentUser?.name || 'User');
+    return `https://ui-avatars.com/api/?name=${initials}&background=2ECC71&color=fff`;
+  };
 
   const handleLogoutClick = () => {
     setShowLogoutConfirmation(true);
@@ -132,16 +152,16 @@ export default function Navbar({ onMenuClick }) {
               aria-haspopup="true"
             >
               <img
-                src={avatar}
-                alt="User Avatar"
+                src={getAvatarUrl()}
+                alt={userRole === 'admin' ? "Admin Avatar" : "User Avatar"}
                 className="avatar-image"
                 width={40}
                 height={40}
                 loading="lazy"
               />
               <div className="user-info">
-                <h4 className="user-name">Admin</h4>
-                <span className="user-status">Online</span>
+                <h4 className="user-name">{userRole === 'admin' ? 'Admin' : currentUser?.name || 'User'}</h4>
+                <span className="user-status online">Online</span>
               </div>
             </div>
 

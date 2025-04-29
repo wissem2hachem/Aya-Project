@@ -76,7 +76,7 @@ function App() {
             </Route>
             
             {/* Admin and Manager only routes */}
-            <Route element={<RouteGuard requiredRoles={['admin', 'manager']} />}>
+            <Route element={<RouteGuard requiredRoles={['admin', 'manager', 'hr']} />}>
               <Route path="/usermanager" element={<UserManager />} />
             </Route>
           </Route>

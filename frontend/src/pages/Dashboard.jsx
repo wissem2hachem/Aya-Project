@@ -10,6 +10,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [attendanceData, setAttendanceData] = useState(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
   const { userRole, hasPermission } = useAuth();
 
   // Fetch user profile data
@@ -39,24 +41,75 @@ export default function Dashboard() {
     fetchUserProfile();
   }, []);
 
-  // Mock data for dashboard statistics
-  const stats = [
-    { id: 1, title: 'Total Employees', value: '128', icon: <FiUsers />, color: '#3498db' },
-    { id: 2, title: 'Departments', value: '8', icon: <FiBriefcase />, color: '#2ecc71' },
-    { id: 3, title: 'Present Today', value: '105', icon: <FiCalendar />, color: '#9b59b6' },
-    { id: 4, title: 'On Leave', value: '12', icon: <FiClock />, color: '#e74c3c' },
-    { id: 5, title: 'Open Positions', value: '5', icon: <FiBriefcase />, color: '#f39c12' },
-    { id: 6, title: 'Monthly Budget', value: '$28,500', icon: <FiDollarSign />, color: '#1abc9c' }
-  ];
+  // Fetch attendance data
+  useEffect(() => {
+    const fetchAttendanceData = async () => {
+      try {
+        setAttendanceLoading(true);
+        const token = localStorage.getItem("token");
+        if (!token) return;
 
-  // Mock data for recent activities
-  const recentActivities = [
-    { id: 1, user: 'Sarah Johnson', action: 'updated the attendance record', time: '10 minutes ago', avatar: 'https://ui-avatars.com/api/?name=SJ&background=9b59b6&color=fff' },
-    { id: 2, user: 'Michael Brown', action: 'submitted a leave request', time: '2 hours ago', avatar: 'https://ui-avatars.com/api/?name=MB&background=3498db&color=fff' },
-    { id: 3, user: 'Emily Davis', action: 'completed quarterly report', time: 'Yesterday at 4:30 PM', avatar: 'https://ui-avatars.com/api/?name=ED&background=e74c3c&color=fff' },
-    { id: 4, user: 'David Wilson', action: 'approved budget for Q3', time: 'Yesterday at 1:20 PM', avatar: 'https://ui-avatars.com/api/?name=DW&background=f39c12&color=fff' },
-    { id: 5, user: 'Lisa Wang', action: 'onboarded 3 new employees', time: '2 days ago', avatar: 'https://ui-avatars.com/api/?name=LW&background=1abc9c&color=fff' }
-  ];
+        // Get current week's dates
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // Start from Sunday
+        const endOfWeek = new Date(today);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // End on Saturday
+
+        const response = await axios.get(
+          `http://localhost:5000/api/attendance/weekly?startDate=${startOfWeek.toISOString().split('T')[0]}&endDate=${endOfWeek.toISOString().split('T')[0]}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        setAttendanceData(response.data);
+      } catch (error) {
+        console.error("Error fetching attendance data:", error);
+      } finally {
+        setAttendanceLoading(false);
+      }
+    };
+
+    fetchAttendanceData();
+  }, []);
+
+  // Calculate attendance statistics
+  const calculateAttendanceStats = () => {
+    if (!attendanceData) return { present: 0, absent: 0, leave: 0 };
+
+    const total = attendanceData.length;
+    const present = attendanceData.filter(record => record.status === 'present').length;
+    const absent = attendanceData.filter(record => record.status === 'absent').length;
+    const leave = attendanceData.filter(record => record.status === 'leave').length;
+
+    return {
+      present: total ? Math.round((present / total) * 100) : 0,
+      absent: total ? Math.round((absent / total) * 100) : 0,
+      leave: total ? Math.round((leave / total) * 100) : 0
+    };
+  };
+
+  // Get attendance data for chart
+  const getAttendanceChartData = () => {
+    if (!attendanceData) return Array(7).fill(0);
+
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days.map(day => {
+      const dayRecords = attendanceData.filter(record => {
+        const recordDate = new Date(record.date);
+        return recordDate.toLocaleDateString('en-US', { weekday: 'long' }) === day;
+      });
+      
+      const presentCount = dayRecords.filter(record => record.status === 'present').length;
+      return dayRecords.length ? Math.round((presentCount / dayRecords.length) * 100) : 0;
+    });
+  };
+
+  const attendanceStats = calculateAttendanceStats();
+  const chartData = getAttendanceChartData();
 
   // Navigation handlers for quick action buttons
   const handleNavigateToEmployees = () => navigate('/employees');
@@ -69,12 +122,6 @@ export default function Dashboard() {
     <div className="dashboard-page">
       <header className="dashboard-header">
         <h1>Dashboard</h1>
-        <div className="date-picker">
-          <span>June 2023</span>
-          <button className="refresh-button">
-            <FiBarChart2 /> Reports
-          </button>
-        </div>
       </header>
 
       {/* Role Information Alert */}
@@ -156,139 +203,49 @@ export default function Dashboard() {
 
         <div className="dashboard-card attendance-overview">
           <h2>Attendance Overview</h2>
-          <div className="attendance-chart">
-            <div className="chart-placeholder">
-              <div className="chart-bar" style={{ height: '70%', backgroundColor: '#3498db' }}></div>
-              <div className="chart-bar" style={{ height: '65%', backgroundColor: '#3498db' }}></div>
-              <div className="chart-bar" style={{ height: '80%', backgroundColor: '#3498db' }}></div>
-              <div className="chart-bar" style={{ height: '75%', backgroundColor: '#3498db' }}></div>
-              <div className="chart-bar" style={{ height: '85%', backgroundColor: '#3498db' }}></div>
-              <div className="chart-bar" style={{ height: '60%', backgroundColor: '#3498db' }}></div>
-              <div className="chart-bar" style={{ height: '90%', backgroundColor: '#3498db' }}></div>
-            </div>
-            <div className="chart-labels">
-              <span>Mon</span>
-              <span>Tue</span>
-              <span>Wed</span>
-              <span>Thu</span>
-              <span>Fri</span>
-              <span>Sat</span>
-              <span>Sun</span>
-            </div>
-          </div>
-          <div className="attendance-summary">
-            <div className="summary-item">
-              <span className="label">Present</span>
-              <span className="value">82%</span>
-            </div>
-            <div className="summary-item">
-              <span className="label">Absent</span>
-              <span className="value">10%</span>
-            </div>
-            <div className="summary-item">
-              <span className="label">Leave</span>
-              <span className="value">8%</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="dashboard-card recent-activities">
-          <h2>Recent Activities</h2>
-          <ul className="activities-list">
-            {recentActivities.map(activity => (
-              <li key={activity.id} className="activity-item">
-                <img 
-                  src={activity.avatar} 
-                  alt={activity.user} 
-                  className="activity-avatar"
-                />
-                <div className="activity-content">
-                  <p className="activity-text">
-                    <strong>{activity.user}</strong> {activity.action}
-                  </p>
-                  <span className="activity-time">{activity.time}</span>
+          {attendanceLoading ? (
+            <div className="loading-message">Loading attendance data...</div>
+          ) : (
+            <>
+              <div className="attendance-chart">
+                <div className="chart-placeholder">
+                  {chartData.map((value, index) => (
+                    <div 
+                      key={index}
+                      className="chart-bar" 
+                      style={{ 
+                        height: `${value}%`, 
+                        backgroundColor: '#3498db' 
+                      }}
+                    ></div>
+                  ))}
                 </div>
-              </li>
-            ))}
-          </ul>
-          <button className="view-all-btn">View All Activities</button>
-        </div>
-
-        {/* Recommended Connections */}
-        <div className="dashboard-card connections-card">
-          <div className="connections-header">
-            <h2>Recommended Connections</h2>
-            <button className="view-all">View All</button>
-          </div>
-          
-          <div className="connections-list">
-            <div className="connection-card">
-              <img 
-                src="https://ui-avatars.com/api/?name=JD&background=3498db&color=fff" 
-                alt="John Doe" 
-                className="connection-avatar"
-              />
-              <div className="connection-info">
-                <h3>John Doe</h3>
-                <p className="connection-position">UX Designer</p>
-                <p className="mutual-connections">3 mutual connections</p>
+                <div className="chart-labels">
+                  <span>Sun</span>
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                </div>
               </div>
-              <button className="connect-btn">Connect</button>
-            </div>
-            
-            <div className="connection-card">
-              <img 
-                src="https://ui-avatars.com/api/?name=AS&background=9b59b6&color=fff" 
-                alt="Alice Smith" 
-                className="connection-avatar"
-              />
-              <div className="connection-info">
-                <h3>Alice Smith</h3>
-                <p className="connection-position">Product Manager</p>
-                <p className="mutual-connections">5 mutual connections</p>
+              <div className="attendance-summary">
+                <div className="summary-item">
+                  <span className="label">Present</span>
+                  <span className="value">{attendanceStats.present}%</span>
+                </div>
+                <div className="summary-item">
+                  <span className="label">Absent</span>
+                  <span className="value">{attendanceStats.absent}%</span>
+                </div>
+                <div className="summary-item">
+                  <span className="label">Leave</span>
+                  <span className="value">{attendanceStats.leave}%</span>
+                </div>
               </div>
-              <button className="connect-btn">Connect</button>
-            </div>
-            
-            <div className="connection-card">
-              <img 
-                src="https://ui-avatars.com/api/?name=RJ&background=e74c3c&color=fff" 
-                alt="Robert Johnson" 
-                className="connection-avatar"
-              />
-              <div className="connection-info">
-                <h3>Robert Johnson</h3>
-                <p className="connection-position">Backend Developer</p>
-                <p className="mutual-connections">2 mutual connections</p>
-              </div>
-              <button className="connect-btn">Connect</button>
-            </div>
-          </div>
-          
-          {/* Empty state - will be shown conditionally in a real app */}
-          <div className="empty-connections" style={{ display: 'none' }}>
-            <div className="empty-icon">
-              <FiUsers />
-            </div>
-            <h3 className="empty-title">No recommendations yet</h3>
-            <p className="empty-message">We'll suggest connections as you grow your network</p>
-          </div>
-        </div>
-      </section>
-      
-      <section className="stats-section">
-        <div className="stats-grid">
-          {stats.map(stat => (
-            <div className="stat-card" key={stat.id}>
-              <div className="stat-icon" style={{ backgroundColor: stat.color }}>
-                {stat.icon}
-              </div>
-              <div className="stat-content">
-                <h3 className="stat-title">{stat.title}</h3>
-                <p className="stat-value">{stat.value}</p>
-              </div>
-            </div>
-          ))}
+            </>
+          )}
         </div>
       </section>
       
